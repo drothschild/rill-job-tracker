@@ -7,7 +7,7 @@ COPY .docker-deps/rill-lang /rill-lang
 
 # Copy package files and update rill-lang path for Docker
 COPY package.json package-lock.json ./
-RUN sed -i 's|file:../../Projects/rill-lang|file:/rill-lang|' package.json
+RUN sed -i 's|file:../Projects/rill-lang|file:/rill-lang|' package.json
 
 RUN npm ci
 
