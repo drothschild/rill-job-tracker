@@ -175,7 +175,6 @@ export function jobFormView(job?: Job): string {
           </button>
           <a
             href="/jobs"
-            hx-boost="true"
             class="w-full sm:w-auto px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 font-medium text-sm text-center"
           >
             Cancel

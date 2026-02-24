@@ -183,83 +183,87 @@ export function pipelineBoardView(stages: Stage[], jobsByStage: JobsByStage[]): 
   `;
 
   // Alpine.js component with drag-and-drop and mobile functionality
+  // NOTE: The Alpine.js logic is in a <script> block using Alpine.data() rather than
+  // inline in x-data, because inline JS with > characters breaks HTML attribute parsing.
   return `
-    <div
-      x-data="{
-        draggedJob: null,
-        draggedFromStage: null,
-        expandedSections: {},
+    <script>
+      document.addEventListener('alpine:init', () => {
+        Alpine.data('pipelineBoard', () => ({
+          draggedJob: null,
+          draggedFromStage: null,
+          expandedSections: {},
 
-        dragStart(event) {
-          this.draggedJob = event.currentTarget.dataset.jobId;
-          this.draggedFromStage = event.currentTarget.dataset.currentStage;
-          event.currentTarget.classList.add('opacity-50');
-        },
+          dragStart(event) {
+            this.draggedJob = event.currentTarget.dataset.jobId;
+            this.draggedFromStage = event.currentTarget.dataset.currentStage;
+            event.currentTarget.classList.add('opacity-50');
+          },
 
-        dragEnd(event) {
-          event.currentTarget.classList.remove('opacity-50');
-        },
+          dragEnd(event) {
+            event.currentTarget.classList.remove('opacity-50');
+          },
 
-        dragOver(event) {
-          event.preventDefault();
-          event.currentTarget.classList.add('bg-blue-50');
-        },
+          dragOver(event) {
+            event.preventDefault();
+            event.currentTarget.classList.add('bg-blue-50');
+          },
 
-        dragLeave(event) {
-          event.currentTarget.classList.remove('bg-blue-50');
-        },
+          dragLeave(event) {
+            event.currentTarget.classList.remove('bg-blue-50');
+          },
 
-        drop(event, toStageId) {
-          event.preventDefault();
-          event.currentTarget.classList.remove('bg-blue-50');
+          drop(event, toStageId) {
+            event.preventDefault();
+            event.currentTarget.classList.remove('bg-blue-50');
 
-          if (this.draggedJob && this.draggedFromStage != toStageId) {
-            this.submitTransitionDrop(this.draggedJob, toStageId);
-          }
-        },
-
-        toggleSection(stageId) {
-          this.expandedSections[stageId] = !this.expandedSections[stageId];
-        },
-
-        submitTransitionDrop(jobId, toStageId) {
-          // Show prompt for optional sub_label
-          const subLabel = prompt('Optional: Enter a sub-label for this transition (e.g., "Technical Interview")');
-
-          const formData = new FormData();
-          formData.append('job_id', jobId);
-          formData.append('to_stage_id', toStageId);
-          if (subLabel) {
-            formData.append('sub_label', subLabel);
-          }
-
-          // Use fetch to POST the transition
-          fetch('/pipeline/transition', {
-            method: 'POST',
-            body: formData
-          })
-          .then(response => {
-            if (response.ok) {
-              // Reload the pipeline board
-              window.location.reload();
-            } else {
-              alert('Transition failed. Please try again.');
+            if (this.draggedJob && this.draggedFromStage != toStageId) {
+              this.submitTransitionDrop(this.draggedJob, toStageId);
             }
-          })
-          .catch(err => {
-            console.error('Transition error:', err);
-            alert('Error during transition');
-          });
-        },
+          },
 
-        submitTransition(event, jobId) {
-          event.preventDefault();
-          const toStageId = event.currentTarget.querySelector('select').value;
-          if (toStageId) {
-            this.submitTransitionDrop(jobId, toStageId);
+          toggleSection(stageId) {
+            this.expandedSections[stageId] = !this.expandedSections[stageId];
+          },
+
+          submitTransitionDrop(jobId, toStageId) {
+            const subLabel = prompt('Optional: Enter a sub-label for this transition (e.g., "Technical Interview")');
+
+            const formData = new FormData();
+            formData.append('job_id', jobId);
+            formData.append('to_stage_id', toStageId);
+            if (subLabel) {
+              formData.append('sub_label', subLabel);
+            }
+
+            fetch('/pipeline/transition', {
+              method: 'POST',
+              body: formData
+            })
+            .then(function(response) {
+              if (response.ok) {
+                window.location.reload();
+              } else {
+                alert('Transition failed. Please try again.');
+              }
+            })
+            .catch(function(err) {
+              console.error('Transition error:', err);
+              alert('Error during transition');
+            });
+          },
+
+          submitTransition(event, jobId) {
+            event.preventDefault();
+            const toStageId = event.currentTarget.querySelector('select').value;
+            if (toStageId) {
+              this.submitTransitionDrop(jobId, toStageId);
+            }
           }
-        }
-      }"
+        }));
+      });
+    </script>
+    <div
+      x-data="pipelineBoard"
       class="space-y-6"
     >
       ${desktopContent}
