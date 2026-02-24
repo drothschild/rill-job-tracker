@@ -1,0 +1,17 @@
+services:
+  tracker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - tracker-data:/data
+    environment:
+      - DB_PATH=/data/tracker.db
+      - PORT=3000
+      - SESSION_SECRET=${SESSION_SECRET:-change-me-in-production}
+    restart: unless-stopped
+
+volumes:
+  tracker-data:
