@@ -4,8 +4,11 @@
 
 let has_company = length(job.company_name) > 0 in
 let has_role = length(job.role) > 0 in
+-- Salary validation: if both are positive integers, then min must be <= max
 let salary_valid = match (job.salary_min, job.salary_max) {
   (0, 0) -> true,
+  (0, _) -> true,
+  (_, 0) -> true,
   (min, max) -> min <= max
 } in
 match (has_company, has_role, salary_valid) {

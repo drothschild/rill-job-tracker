@@ -107,8 +107,8 @@ router.post('/', (req: Request, res: Response): void => {
     company_name: (req.body.company_name || '').trim(),
     role: (req.body.role || '').trim(),
     link: (req.body.link || '').trim() || null,
-    salary_min: req.body.salary_min ? parseInt(req.body.salary_min, 10) : null,
-    salary_max: req.body.salary_max ? parseInt(req.body.salary_max, 10) : null,
+    salary_min: req.body.salary_min ? parseInt(req.body.salary_min, 10) : 0,
+    salary_max: req.body.salary_max ? parseInt(req.body.salary_max, 10) : 0,
     application_type: (req.body.application_type || 'cold') as 'warm' | 'cold',
     job_description: (req.body.job_description || '').trim() || null,
     location: (req.body.location || '').trim() || null,
@@ -191,8 +191,8 @@ router.put('/:id', (req: Request, res: Response): void => {
   const formData = {
     company_name: req.body.company_name ? (req.body.company_name || '').trim() : job.company_name,
     role: req.body.role ? (req.body.role || '').trim() : job.role,
-    salary_min: req.body.salary_min !== undefined ? (req.body.salary_min ? parseInt(req.body.salary_min, 10) : null) : job.salary_min,
-    salary_max: req.body.salary_max !== undefined ? (req.body.salary_max ? parseInt(req.body.salary_max, 10) : null) : job.salary_max,
+    salary_min: req.body.salary_min !== undefined ? (req.body.salary_min ? parseInt(req.body.salary_min, 10) : 0) : (job.salary_min || 0),
+    salary_max: req.body.salary_max !== undefined ? (req.body.salary_max ? parseInt(req.body.salary_max, 10) : 0) : (job.salary_max || 0),
   };
 
   // Run Rill validation on updated fields
