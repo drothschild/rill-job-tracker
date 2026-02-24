@@ -1,0 +1,14 @@
+-- Stage transition validation
+-- Injected: from_stage (String), to_stage (String)
+-- Returns: Ok("allowed") or Err("Invalid transition from X to Y")
+
+match (from_stage, to_stage) {
+  ("Applied", "Phone Screen") -> Ok("allowed"),
+  ("Applied", "Rejected") -> Ok("allowed"),
+  ("Phone Screen", "Interview") -> Ok("allowed"),
+  ("Phone Screen", "Rejected") -> Ok("allowed"),
+  ("Interview", "Offer") -> Ok("allowed"),
+  ("Interview", "Rejected") -> Ok("allowed"),
+  ("Offer", "Rejected") -> Ok("allowed"),
+  _ -> Err("Invalid transition from " ++ from_stage ++ " to " ++ to_stage)
+}
