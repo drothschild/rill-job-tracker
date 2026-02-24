@@ -1,4 +1,4 @@
-import { escapeHtml, formatDate } from '../helpers';
+import { escapeHtml, safeJsonStringify } from '../helpers';
 import type { DashboardJob, ApplicationCountByDate, JobsByStage } from '../../db/queries';
 
 export interface DashboardMetrics {
@@ -121,10 +121,10 @@ function renderChartsSection(
           new Chart(timelineCtx, {
             type: 'line',
             data: {
-              labels: ${JSON.stringify(timelineLabels)},
+              labels: ${safeJsonStringify(timelineLabels)},
               datasets: [{
                 label: 'Applications',
-                data: ${JSON.stringify(timelineValues)},
+                data: ${safeJsonStringify(timelineValues)},
                 borderColor: '#3b82f6',
                 backgroundColor: 'rgba(59, 130, 246, 0.1)',
                 borderWidth: 2,
@@ -157,10 +157,10 @@ function renderChartsSection(
           new Chart(stageCtx, {
             type: 'bar',
             data: {
-              labels: ${JSON.stringify(stageLabels)},
+              labels: ${safeJsonStringify(stageLabels)},
               datasets: [{
                 label: 'Jobs by Stage',
-                data: ${JSON.stringify(stageCounts)},
+                data: ${safeJsonStringify(stageCounts)},
                 backgroundColor: stageColors.slice(0, ${stageLabels.length}),
                 borderColor: stageColors.slice(0, ${stageLabels.length}),
                 borderWidth: 1
@@ -189,9 +189,9 @@ function renderChartsSection(
           new Chart(warmColdCtx, {
             type: 'doughnut',
             data: {
-              labels: ${JSON.stringify(warmColdLabels)},
+              labels: ${safeJsonStringify(warmColdLabels)},
               datasets: [{
-                data: ${JSON.stringify(warmColdValues)},
+                data: ${safeJsonStringify(warmColdValues)},
                 backgroundColor: ['#8b5cf6', '#3b82f6'],
                 borderColor: ['#6d28d9', '#1e40af'],
                 borderWidth: 2

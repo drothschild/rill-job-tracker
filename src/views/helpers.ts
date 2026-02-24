@@ -45,6 +45,16 @@ export function formatDate(dateStr: string | null | undefined): string {
 }
 
 /**
+ * Safely stringify JSON for use in script contexts
+ * Escapes '<' to prevent </script> tag injection
+ * @param data The data to stringify
+ * @returns JSON string with '<' escaped
+ */
+export function safeJsonStringify(data: unknown): string {
+  return JSON.stringify(data).replace(/</g, '\\u003c');
+}
+
+/**
  * Format salary range
  * @param min Minimum salary
  * @param max Maximum salary
