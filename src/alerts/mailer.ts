@@ -1,14 +1,6 @@
 import nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
 
-export interface AlertItem {
-  jobId: number;
-  companyName: string;
-  role: string;
-  type: 'follow_up' | 'no_response';
-  message: string;
-}
-
 export interface SendEmailResult {
   success: boolean;
   error?: string;
@@ -35,13 +27,12 @@ export function createMailTransport(gmailUser: string, gmailAppPassword: string)
 export async function sendDigestEmail(
   transport: Transporter,
   recipientEmail: string,
-  _senderEmail: string,
-  alerts: AlertItem[],
+  senderEmail: string,
   htmlBody: string
 ): Promise<SendEmailResult> {
   try {
     await transport.sendMail({
-      from: _senderEmail,
+      from: senderEmail,
       to: recipientEmail,
       subject: 'Job Tracker Alert Digest',
       html: htmlBody,

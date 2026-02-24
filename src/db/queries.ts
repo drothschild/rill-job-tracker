@@ -775,7 +775,12 @@ export function getActiveJobsForAlerts(db: Database.Database): JobForAlert[] {
     WHERE s.name NOT IN ('Rejected', 'Offer')
     ORDER BY j.updated_at DESC
   `);
-  return stmt.all() as JobForAlert[];
+  // SQLite returns 0/1 for boolean expressions, so we need to convert them
+  const rows = stmt.all() as unknown[];
+  return rows.map((row: any) => ({
+    ...row,
+    follow_up_date_passed: row.follow_up_date_passed === 1,
+  })) as JobForAlert[];
 }
 
 /**
@@ -788,4 +793,168 @@ export function updateJobAlertSentAt(db: Database.Database, jobId: number): void
     WHERE id = ?
   `);
   stmt.run(jobId);
+}
+
+// ============================================================================
+// Export
+// ============================================================================
+
+export interface ExportedInteraction {
+  id: number;
+  type: 'call' | 'email' | 'note';
+  content: string;
+  occurred_at: string;
+}
+
+export interface ExportedContact {
+  id: number;
+  name: string;
+  role: string | null;
+  email: string | null;
+  linkedin_url: string | null;
+  notes: string | null;
+  created_at: string;
+  interactions: ExportedInteraction[];
+}
+
+export interface ExportedNote {
+  id: number;
+  content: string;
+  created_at: string;
+}
+
+export interface ExportedStageTransition {
+  from_stage: string | null;
+  to_stage: string;
+  sub_label: string | null;
+  transitioned_at: string;
+}
+
+export interface ExportedJob {
+  id: number;
+  company_name: string;
+  role: string;
+  link: string | null;
+  salary_min: number | null;
+  salary_max: number | null;
+  application_type: 'warm' | 'cold';
+  job_description: string | null;
+  location: string | null;
+  current_stage: string;
+  follow_up_date: string | null;
+  created_at: string;
+  updated_at: string;
+  contacts: ExportedContact[];
+  notes: ExportedNote[];
+  stage_history: ExportedStageTransition[];
+}
+
+export interface ExportData {
+  exported_at: string;
+  jobs: ExportedJob[];
+}
+
+/**
+ * Get complete nested export data for all jobs
+ * Uses a transaction to ensure read consistency
+ */
+export function getFullExportData(db: Database.Database): ExportData {
+  const exported_at = new Date().toISOString();
+
+  // Start transaction for read consistency
+  const transaction = db.transaction(() => {
+    // Get all jobs with current stage names
+    const jobsStmt = db.prepare(`
+      SELECT
+        j.*,
+        s.name as current_stage
+      FROM jobs j
+      LEFT JOIN stages s ON j.current_stage_id = s.id
+      ORDER BY j.created_at ASC
+    `);
+    const jobs = jobsStmt.all() as any[];
+
+    // Build the export structure
+    const exportedJobs: ExportedJob[] = jobs.map((job) => {
+      // Get contacts for this job
+      const contactsStmt = db.prepare(`
+        SELECT * FROM contacts WHERE job_id = ? ORDER BY created_at ASC
+      `);
+      const contacts = contactsStmt.all(job.id) as Contact[];
+
+      // For each contact, get interactions
+      const exportedContacts: ExportedContact[] = contacts.map((contact) => {
+        const interactionsStmt = db.prepare(`
+          SELECT * FROM interactions WHERE contact_id = ? ORDER BY occurred_at ASC
+        `);
+        const interactions = interactionsStmt.all(
+          contact.id
+        ) as ExportedInteraction[];
+
+        return {
+          id: contact.id,
+          name: contact.name,
+          role: contact.role,
+          email: contact.email,
+          linkedin_url: contact.linkedin_url,
+          notes: contact.notes,
+          created_at: contact.created_at,
+          interactions,
+        };
+      });
+
+      // Get notes for this job
+      const notesStmt = db.prepare(`
+        SELECT * FROM notes WHERE job_id = ? ORDER BY created_at ASC
+      `);
+      const notes = notesStmt.all(job.id) as ExportedNote[];
+
+      // Get stage transitions for this job with stage names
+      const transitionsStmt = db.prepare(`
+        SELECT
+          st.*,
+          fs.name as from_stage_name,
+          ts.name as to_stage_name
+        FROM stage_transitions st
+        LEFT JOIN stages fs ON st.from_stage_id = fs.id
+        LEFT JOIN stages ts ON st.to_stage_id = ts.id
+        WHERE st.job_id = ?
+        ORDER BY st.transitioned_at ASC
+      `);
+      const transitions = transitionsStmt.all(job.id) as any[];
+
+      const stage_history: ExportedStageTransition[] = transitions.map((t) => ({
+        from_stage: t.from_stage_name,
+        to_stage: t.to_stage_name,
+        sub_label: t.sub_label,
+        transitioned_at: t.transitioned_at,
+      }));
+
+      return {
+        id: job.id,
+        company_name: job.company_name,
+        role: job.role,
+        link: job.link,
+        salary_min: job.salary_min,
+        salary_max: job.salary_max,
+        application_type: job.application_type,
+        job_description: job.job_description,
+        location: job.location,
+        current_stage: job.current_stage,
+        follow_up_date: job.follow_up_date,
+        created_at: job.created_at,
+        updated_at: job.updated_at,
+        contacts: exportedContacts,
+        notes,
+        stage_history,
+      };
+    });
+
+    return {
+      exported_at,
+      jobs: exportedJobs,
+    };
+  });
+
+  return transaction();
 }
