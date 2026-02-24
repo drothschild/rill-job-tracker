@@ -56,32 +56,32 @@ export function jobListView(jobs: Job[]): string {
     .map(
       (job) => `
     <div class="bg-white rounded-lg shadow hover:shadow-md transition-shadow border border-gray-200">
-      <div class="p-6">
+      <div class="p-4 sm:p-6">
         <!-- Header with company and role -->
         <div class="mb-4">
           <a
             href="/jobs/${job.id}"
             hx-boost="true"
-            class="text-xl font-bold text-gray-900 hover:text-blue-600"
+            class="text-lg sm:text-xl font-bold text-gray-900 hover:text-blue-600 block break-words"
           >
             ${escapeHtml(job.company_name)}
           </a>
-          <p class="text-sm text-gray-600">${escapeHtml(job.role)}</p>
+          <p class="text-sm text-gray-600 break-words">${escapeHtml(job.role)}</p>
         </div>
 
         <!-- Badges -->
         <div class="flex gap-2 mb-4 flex-wrap">
-          <span class="inline-block px-3 py-1 rounded-full text-sm font-medium ${getStageColor(job.stage_name)}">
+          <span class="inline-block px-3 py-1 rounded-full text-xs sm:text-sm font-medium ${getStageColor(job.stage_name)}">
             ${job.stage_name ? escapeHtml(job.stage_name) : 'No Stage'}
           </span>
-          <span class="inline-block px-3 py-1 rounded-full text-sm font-medium ${getTypeColor(job.application_type)}">
+          <span class="inline-block px-3 py-1 rounded-full text-xs sm:text-sm font-medium ${getTypeColor(job.application_type)}">
             ${getTypeLabel(job.application_type)}
           </span>
         </div>
 
         <!-- Details -->
-        <div class="space-y-2 text-sm text-gray-600 mb-4">
-          ${job.location ? `<p><strong>Location:</strong> ${escapeHtml(job.location)}</p>` : ''}
+        <div class="space-y-2 text-xs sm:text-sm text-gray-600 mb-4">
+          ${job.location ? `<p><strong>Location:</strong> <span class="break-words">${escapeHtml(job.location)}</span></p>` : ''}
           <p><strong>Salary:</strong> ${formatSalary(job.salary_min, job.salary_max)}</p>
           <p><strong>Applied:</strong> ${formatDate(job.created_at)}</p>
           ${job.follow_up_date ? `<p><strong>Follow-up:</strong> ${formatDate(job.follow_up_date)}</p>` : ''}
@@ -91,7 +91,7 @@ export function jobListView(jobs: Job[]): string {
         <a
           href="/jobs/${job.id}"
           hx-boost="true"
-          class="inline-block text-blue-600 hover:text-blue-800 font-medium text-sm"
+          class="inline-block text-blue-600 hover:text-blue-800 font-medium text-xs sm:text-sm"
         >
           View Details →
         </a>
@@ -106,13 +106,13 @@ export function jobListView(jobs: Job[]): string {
       <a
         href="/jobs/new"
         hx-boost="true"
-        class="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+        class="inline-block px-4 sm:px-6 py-2 sm:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm sm:text-base"
       >
         New Job
       </a>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
       ${jobCards}
     </div>
   `;

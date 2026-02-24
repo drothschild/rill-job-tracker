@@ -45,32 +45,32 @@ export function jobDetailView(
 
   const renderContactCard = (contact: Contact): string => {
     return `
-      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-        <div class="flex justify-between items-start mb-3">
-          <div>
-            <h4 class="font-bold text-gray-900">${escapeHtml(contact.name)}</h4>
-            ${contact.role ? `<p class="text-sm text-gray-600">${escapeHtml(contact.role)}</p>` : ''}
+      <div class="bg-gray-50 rounded-lg p-3 sm:p-4 border border-gray-200">
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-3">
+          <div class="min-w-0">
+            <h4 class="font-bold text-gray-900 break-words">${escapeHtml(contact.name)}</h4>
+            ${contact.role ? `<p class="text-xs sm:text-sm text-gray-600 break-words">${escapeHtml(contact.role)}</p>` : ''}
           </div>
           <button
             hx-delete="/jobs/${job.id}/contacts/${contact.id}"
             hx-target="#contacts-section"
             hx-confirm="Delete this contact?"
-            class="text-red-600 hover:text-red-800 text-sm font-medium"
+            class="w-full sm:w-auto px-3 py-1 text-red-600 hover:text-red-800 text-xs sm:text-sm font-medium"
           >
             Delete
           </button>
         </div>
 
         <!-- Contact details -->
-        <div class="space-y-1 text-sm mb-3">
-          ${contact.email ? `<p><a href="mailto:${escapeHtml(contact.email)}" class="text-blue-600 hover:text-blue-800">${escapeHtml(contact.email)}</a></p>` : ''}
-          ${contact.linkedin_url ? `<p><a href="${escapeHtml(contact.linkedin_url)}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800">LinkedIn Profile →</a></p>` : ''}
-          ${contact.notes ? `<p class="text-gray-600"><strong>Notes:</strong> ${escapeHtml(contact.notes)}</p>` : ''}
+        <div class="space-y-1 text-xs sm:text-sm mb-3">
+          ${contact.email ? `<p><a href="mailto:${escapeHtml(contact.email)}" class="text-blue-600 hover:text-blue-800 break-all">${escapeHtml(contact.email)}</a></p>` : ''}
+          ${contact.linkedin_url ? `<p><a href="${escapeHtml(contact.linkedin_url)}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 break-all">LinkedIn Profile →</a></p>` : ''}
+          ${contact.notes ? `<p class="text-gray-600 break-words"><strong>Notes:</strong> ${escapeHtml(contact.notes)}</p>` : ''}
         </div>
 
         <!-- Interactions section would be populated here -->
         <div class="mt-3 pt-3 border-t border-gray-300">
-          <details class="text-sm">
+          <details class="text-xs sm:text-sm">
             <summary class="cursor-pointer font-medium text-gray-700 hover:text-gray-900">
               Interactions (0)
             </summary>
@@ -94,27 +94,27 @@ export function jobDetailView(
   };
 
   return `
-    <div class="grid grid-cols-3 gap-8">
-      <!-- Main Content (2/3) -->
-      <div class="col-span-2 space-y-8">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+      <!-- Main Content -->
+      <div class="md:col-span-2 space-y-6 md:space-y-8">
         <!-- Job Header -->
-        <div class="bg-white rounded-lg shadow p-6">
-          <div class="flex justify-between items-start mb-4">
-            <div>
-              <h2 class="text-2xl font-bold text-gray-900">${escapeHtml(job.company_name)}</h2>
-              <p class="text-lg text-gray-600">${escapeHtml(job.role)}</p>
+        <div class="bg-white rounded-lg shadow p-4 sm:p-6">
+          <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-4">
+            <div class="min-w-0">
+              <h2 class="text-xl sm:text-2xl font-bold text-gray-900 break-words">${escapeHtml(job.company_name)}</h2>
+              <p class="text-base sm:text-lg text-gray-600 break-words">${escapeHtml(job.role)}</p>
             </div>
             <a
               href="/jobs/${job.id}/edit"
               hx-boost="true"
-              class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm"
+              class="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm text-center"
             >
               Edit
             </a>
           </div>
 
           <!-- Job details -->
-          <div class="grid grid-cols-2 gap-4 text-sm">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs sm:text-sm">
             <div>
               <p class="text-gray-500">Current Stage</p>
               <span class="inline-block mt-1 px-3 py-1 rounded-full font-medium ${stageColor(job.stage_name)}">
@@ -131,12 +131,12 @@ export function jobDetailView(
             </div>
             <div>
               <p class="text-gray-500">Location</p>
-              <p class="font-medium text-gray-900 mt-1">${job.location ? escapeHtml(job.location) : 'Not specified'}</p>
+              <p class="font-medium text-gray-900 mt-1 break-words">${job.location ? escapeHtml(job.location) : 'Not specified'}</p>
             </div>
             ${job.link ? `
-              <div class="col-span-2">
+              <div class="col-span-1 sm:col-span-2">
                 <p class="text-gray-500">Job Link</p>
-                <a href="${escapeHtml(job.link)}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 font-medium mt-1 block truncate">
+                <a href="${escapeHtml(job.link)}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 font-medium mt-1 block break-all text-xs sm:text-sm">
                   ${escapeHtml(job.link)}
                 </a>
               </div>
@@ -152,22 +152,22 @@ export function jobDetailView(
 
         <!-- Job Description -->
         ${job.job_description ? `
-          <div class="bg-white rounded-lg shadow p-6">
+          <div class="bg-white rounded-lg shadow p-4 sm:p-6">
             <h3 class="text-lg font-bold text-gray-900 mb-4">Job Description</h3>
-            <div class="prose prose-sm max-w-none text-gray-700 whitespace-pre-wrap">
+            <div class="prose prose-sm max-w-none text-gray-700 whitespace-pre-wrap text-xs sm:text-sm break-words">
               ${escapeHtml(job.job_description)}
             </div>
           </div>
         ` : ''}
 
         <!-- Contacts Section -->
-        <div id="contacts-section" class="bg-white rounded-lg shadow p-6">
-          <div class="flex justify-between items-center mb-4">
+        <div id="contacts-section" class="bg-white rounded-lg shadow p-4 sm:p-6">
+          <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
             <h3 class="text-lg font-bold text-gray-900">Contacts</h3>
             <button
               hx-get="/jobs/${job.id}/contacts/new"
               hx-target="this"
-              class="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700 font-medium"
+              class="w-full sm:w-auto px-3 py-2 bg-green-600 text-white rounded text-sm hover:bg-green-700 font-medium"
             >
               Add Contact
             </button>
@@ -176,14 +176,14 @@ export function jobDetailView(
           ${contacts.length === 0
             ? '<p class="text-gray-500">No contacts yet. Add one to track interactions.</p>'
             : `
-              <div class="space-y-4">
+              <div class="space-y-3 sm:space-y-4">
                 ${contacts.map((contact) => renderContactCard(contact)).join('')}
               </div>
             `}
         </div>
 
         <!-- Notes Section -->
-        <div id="notes-section" class="bg-white rounded-lg shadow p-6">
+        <div id="notes-section" class="bg-white rounded-lg shadow p-4 sm:p-6">
           <h3 class="text-lg font-bold text-gray-900 mb-4">Notes</h3>
 
           <!-- Add Note Form -->
@@ -193,12 +193,12 @@ export function jobDetailView(
                 name="content"
                 rows="3"
                 placeholder="Add a note about this job..."
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"
                 required
               ></textarea>
               <button
                 type="submit"
-                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm"
+                class="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm"
               >
                 Add Note
               </button>
@@ -209,23 +209,23 @@ export function jobDetailView(
           ${notes.length === 0
             ? '<p class="text-gray-500">No notes yet.</p>'
             : `
-              <div class="space-y-4">
+              <div class="space-y-3 sm:space-y-4">
                 ${notes
                   .map(
                     (note) => `
-                  <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                    <div class="flex justify-between items-start mb-2">
-                      <p class="text-sm text-gray-600">${formatDate(note.created_at)}</p>
+                  <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 sm:p-4">
+                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-2">
+                      <p class="text-xs sm:text-sm text-gray-600">${formatDate(note.created_at)}</p>
                       <button
                         hx-delete="/jobs/${job.id}/notes/${note.id}"
                         hx-target="#notes-section"
                         hx-confirm="Delete this note?"
-                        class="text-red-600 hover:text-red-800 text-sm"
+                        class="text-red-600 hover:text-red-800 text-xs sm:text-sm"
                       >
                         Delete
                       </button>
                     </div>
-                    <p class="text-gray-800 whitespace-pre-wrap">${escapeHtml(note.content)}</p>
+                    <p class="text-gray-800 whitespace-pre-wrap text-sm break-words">${escapeHtml(note.content)}</p>
                   </div>
                 `
                   )
@@ -235,12 +235,12 @@ export function jobDetailView(
         </div>
       </div>
 
-      <!-- Sidebar (1/3) -->
-      <div class="col-span-1">
+      <!-- Sidebar -->
+      <div class="md:col-span-1">
         <!-- Timeline -->
-        <div class="bg-white rounded-lg shadow p-6">
+        <div class="bg-white rounded-lg shadow p-4 sm:p-6">
           <h3 class="text-lg font-bold text-gray-900 mb-4">Timeline</h3>
-          <div class="space-y-4 text-sm">
+          <div class="space-y-4 text-xs sm:text-sm">
             <div>
               <p class="text-gray-500">Created</p>
               <p class="font-medium text-gray-900">${formatDate(job.created_at)}</p>
@@ -259,7 +259,7 @@ export function jobDetailView(
                   ${stageHistory
                     .map(
                       (transition) => `
-                    <div class="text-sm">
+                    <div class="text-xs sm:text-sm">
                       <p class="text-gray-600">${formatDate(transition.transitioned_at)}</p>
                       <p class="font-medium text-gray-900">
                         ${transition.to_stage_name ? escapeHtml(transition.to_stage_name) : 'Unknown'}

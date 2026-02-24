@@ -35,7 +35,7 @@ function jobCard(job: Job, allStages: Stage[]): string {
 
   return `
     <div
-      class="bg-white border border-gray-200 rounded-lg p-4 mb-3 cursor-move hover:shadow-md transition-shadow"
+      class="bg-white border border-gray-200 rounded-lg p-3 sm:p-4 mb-3 cursor-move hover:shadow-md transition-shadow"
       draggable="true"
       data-job-id="${job.id}"
       data-current-stage="${job.current_stage_id}"
@@ -44,8 +44,8 @@ function jobCard(job: Job, allStages: Stage[]): string {
     >
       <!-- Header with company and role -->
       <div class="mb-2">
-        <h3 class="font-semibold text-gray-900 text-sm">${escapeHtml(job.company_name)}</h3>
-        <p class="text-xs text-gray-600">${escapeHtml(job.role)}</p>
+        <h3 class="font-semibold text-gray-900 text-xs sm:text-sm break-words">${escapeHtml(job.company_name)}</h3>
+        <p class="text-xs text-gray-600 break-words">${escapeHtml(job.role)}</p>
       </div>
 
       <!-- Metadata badges -->
@@ -90,7 +90,7 @@ function desktopColumn(stage: Stage, jobs: Job[], allStages: Stage[]): string {
 
   return `
     <div
-      class="flex-shrink-0 w-80 bg-gray-50 rounded-lg border border-gray-200 p-4"
+      class="flex-shrink-0 w-72 sm:w-80 bg-gray-50 rounded-lg border border-gray-200 p-3 sm:p-4"
       data-stage-id="${stage.id}"
       @dragover="dragOver($event)"
       @drop="drop($event, ${stage.id})"
@@ -98,7 +98,7 @@ function desktopColumn(stage: Stage, jobs: Job[], allStages: Stage[]): string {
     >
       <!-- Column header -->
       <div class="mb-4 pb-3 border-b border-gray-300">
-        <h2 class="font-semibold text-gray-900">${escapeHtml(stage.name)}</h2>
+        <h2 class="font-semibold text-gray-900 text-sm">${escapeHtml(stage.name)}</h2>
         <p class="text-xs text-gray-500">${jobCount} job${jobCount !== 1 ? 's' : ''}</p>
       </div>
 
@@ -125,14 +125,14 @@ function mobileSection(stage: Stage, jobs: Job[], allStages: Stage[]): string {
       <button
         type="button"
         @click="toggleSection(${stage.id})"
-        class="w-full bg-gray-100 hover:bg-gray-200 transition-colors px-4 py-3 flex justify-between items-center text-left"
+        class="w-full bg-gray-100 hover:bg-gray-200 transition-colors px-3 sm:px-4 py-3 flex justify-between items-center text-left"
       >
-        <div>
-          <h2 class="font-semibold text-gray-900">${escapeHtml(stage.name)}</h2>
+        <div class="min-w-0">
+          <h2 class="font-semibold text-gray-900 text-sm">${escapeHtml(stage.name)}</h2>
           <p class="text-xs text-gray-500">${jobCount} job${jobCount !== 1 ? 's' : ''}</p>
         </div>
         <svg
-          class="w-5 h-5 text-gray-600 transform transition-transform"
+          class="w-5 h-5 text-gray-600 transform transition-transform flex-shrink-0 ml-2"
           :class="{'rotate-180': expandedSections[${stage.id}]}"
           fill="none" stroke="currentColor" viewBox="0 0 24 24"
         >
@@ -143,7 +143,7 @@ function mobileSection(stage: Stage, jobs: Job[], allStages: Stage[]): string {
       <!-- Section content (collapsible) -->
       <div
         x-show="expandedSections[${stage.id}]"
-        class="bg-white p-4 border-t border-gray-200"
+        class="bg-white p-3 sm:p-4 border-t border-gray-200"
       >
         ${jobsHtml}
       </div>
@@ -170,7 +170,7 @@ export function pipelineBoardView(stages: Stage[], jobsByStage: JobsByStage[]): 
 
   // Desktop view - horizontal scrolling columns
   const desktopContent = `
-    <div class="hidden md:flex gap-4 pb-4 overflow-x-auto">
+    <div class="hidden md:flex gap-3 sm:gap-4 pb-4 overflow-x-auto">
       ${stages.map((stage) => desktopColumn(stage, jobMap[stage.id], stages)).join('')}
     </div>
   `;
