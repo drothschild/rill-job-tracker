@@ -1,6 +1,5 @@
 import nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
-import type { AlertItem } from './digest';
 
 export interface SendEmailResult {
   success: boolean;

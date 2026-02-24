@@ -3,7 +3,7 @@ import type Database from 'better-sqlite3';
 import { getAlertSettings, getActiveJobsForAlerts, updateJobAlertSentAt } from '../db/queries';
 import { evaluateRule } from '../rill/bridge';
 import { createMailTransport, sendDigestEmail } from './mailer';
-import { formatDigestHtml, formatDigestPlainText } from './digest';
+import { formatDigestHtml } from './digest';
 import type { AlertItem } from './digest';
 
 interface RuleEvalResult {
