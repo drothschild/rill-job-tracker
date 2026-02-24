@@ -11,6 +11,7 @@ import {
   createStageTransition,
 } from '../db/queries';
 import { evaluateRule } from '../rill/bridge';
+import { escapeHtml } from '../views/helpers';
 import { layout } from '../views/layout';
 import { pipelineBoardView } from '../views/pipeline/board';
 
@@ -75,7 +76,7 @@ router.post('/transition', (req: Request, res: Response): void => {
     // Rill execution failed
     res.status(422).send(`
       <div class="bg-red-50 border border-red-200 rounded-lg p-4">
-        <p class="text-red-800 font-medium">Validation error: ${ruleResult.error}</p>
+        <p class="text-red-800 font-medium">Validation error: ${escapeHtml(ruleResult.error)}</p>
       </div>
     `);
     return;
@@ -87,7 +88,7 @@ router.post('/transition', (req: Request, res: Response): void => {
     // Invalid transition
     res.status(422).send(`
       <div class="bg-red-50 border border-red-200 rounded-lg p-4">
-        <p class="text-red-800 font-medium">${resultValue.value}</p>
+        <p class="text-red-800 font-medium">${escapeHtml(resultValue.value)}</p>
       </div>
     `);
     return;
@@ -112,7 +113,7 @@ router.post('/transition', (req: Request, res: Response): void => {
     const message = error instanceof Error ? error.message : String(error);
     res.status(500).send(`
       <div class="bg-red-50 border border-red-200 rounded-lg p-4">
-        <p class="text-red-800 font-medium">Error: ${message}</p>
+        <p class="text-red-800 font-medium">Error: ${escapeHtml(message)}</p>
       </div>
     `);
   }

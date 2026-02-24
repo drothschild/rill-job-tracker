@@ -430,7 +430,32 @@ export interface CreateStageTransitionData {
 export interface JobsByStage {
   stageId: number;
   stageName: string;
+  display_order: number;
   jobs: Job[];
+}
+
+/**
+ * Raw row type for getJobsByStage query result
+ */
+interface JobsByStageRawRow {
+  stageId: number;
+  stageName: string;
+  display_order: number;
+  id: number | null;
+  company_name: string | null;
+  role: string | null;
+  link: string | null;
+  salary_min: number | null;
+  salary_max: number | null;
+  application_type: string | null;
+  job_description: string | null;
+  location: string | null;
+  current_stage_id: number | null;
+  follow_up_date: string | null;
+  last_alert_sent_at: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+  stage_name: string | null;
 }
 
 export function getAllStages(db: Database.Database): Stage[] {
@@ -465,6 +490,7 @@ export function getJobsByStage(db: Database.Database): JobsByStage[] {
     SELECT
       s.id as stageId,
       s.name as stageName,
+      s.display_order,
       j.id,
       j.company_name,
       j.role,
@@ -485,7 +511,7 @@ export function getJobsByStage(db: Database.Database): JobsByStage[] {
     ORDER BY s.display_order, j.updated_at DESC
   `);
 
-  const results = stmt.all() as any[];
+  const results = stmt.all() as JobsByStageRawRow[];
   const groupedByStage: { [key: number]: JobsByStage } = {};
 
   results.forEach((row) => {
@@ -493,6 +519,7 @@ export function getJobsByStage(db: Database.Database): JobsByStage[] {
       groupedByStage[row.stageId] = {
         stageId: row.stageId,
         stageName: row.stageName,
+        display_order: row.display_order,
         jobs: [],
       };
     }
@@ -504,7 +531,7 @@ export function getJobsByStage(db: Database.Database): JobsByStage[] {
         link: row.link,
         salary_min: row.salary_min,
         salary_max: row.salary_max,
-        application_type: row.application_type,
+        application_type: row.application_type as 'warm' | 'cold',
         job_description: row.job_description,
         location: row.location,
         current_stage_id: row.current_stage_id,
@@ -517,7 +544,8 @@ export function getJobsByStage(db: Database.Database): JobsByStage[] {
     }
   });
 
-  return Object.values(groupedByStage);
+  // Sort by display_order to ensure consistent ordering regardless of Object.values() behavior
+  return Object.values(groupedByStage).sort((a, b) => a.display_order - b.display_order);
 }
 
 export function createStageTransition(

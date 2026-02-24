@@ -1,5 +1,5 @@
 import type { Job, Stage, JobsByStage } from '../../db/queries';
-import { escapeHtml, formatDate } from '../helpers';
+import { escapeHtml } from '../helpers';
 
 /**
  * Calculates the number of days a job has been in its current stage
