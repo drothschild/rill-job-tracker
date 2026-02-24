@@ -1,9 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import request from 'supertest';
 import Database from 'better-sqlite3';
 import path from 'path';
 import { mkdirSync, unlinkSync, existsSync } from 'fs';
-import { createApp } from '../src/server';
+import bcrypt from 'bcrypt';
 import { getDb, closeDb } from '../src/db/connection';
 import { runAlertScheduler } from '../src/alerts/scheduler';
 import {
@@ -25,6 +24,37 @@ vi.mock('../src/alerts/mailer', () => ({
 
 // Test database setup
 let testDbPath: string;
+
+/**
+ * Helper to set up authenticated session
+ */
+async function setupAuthenticatedSession(app: any): Promise<any> {
+  const supertest = await import('supertest');
+  const request = supertest.default;
+  const db = getDb();
+
+  // Set initial password
+  const passwordHash = await bcrypt.hash('test-password', 10);
+  db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('password_hash', passwordHash);
+  db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('setup_complete', 'true');
+
+  // Create a session by logging in
+  const loginRes = await request(app).post('/auth/login').send({
+    password: 'test-password',
+  });
+
+  // Extract session cookie
+  const setCookieHeader = loginRes.headers['set-cookie'];
+  const sessionCookie = setCookieHeader
+    ? setCookieHeader.find((cookie: string) => cookie.startsWith('connect.sid'))
+    : null;
+
+  if (!sessionCookie) {
+    throw new Error('Failed to create authenticated session');
+  }
+
+  return sessionCookie;
+}
 
 beforeEach(() => {
   // Create a unique test database for each test
@@ -214,9 +244,8 @@ describe('Email Alerts (AC3)', () => {
       const testJob = activeJobs.find(j => j.id === job.id);
 
       // Verify the computed field shows follow_up_date_passed = true
-      // Note: SQLite returns 1 for true in computed boolean fields
       expect(testJob).toBeDefined();
-      expect(testJob?.follow_up_date_passed).toBe(1);
+      expect(testJob?.follow_up_date_passed).toBe(true);
     });
   });
 
@@ -637,6 +666,61 @@ describe('Email Alerts (AC3)', () => {
       expect(settings.gmail_user).toBe('test@gmail.com');
       expect(settings.gmail_app_password).toBe('password123');
       expect(settings.alert_recipient_email).toBe('recipient@example.com');
+    });
+  });
+
+  describe('HTTP Route Tests - Settings API', () => {
+    it('AC3.4: POST /settings/alerts should persist threshold_days value', async () => {
+      const { createApp } = await import('../src/server');
+      const supertest = await import('supertest');
+      const request = supertest.default;
+      const app = createApp();
+      const sessionCookie = await setupAuthenticatedSession(app);
+
+      // Submit form with threshold_days using authenticated session
+      const response = await request(app)
+        .post('/settings/alerts')
+        .set('Cookie', sessionCookie)
+        .set('HX-Request', 'true')
+        .send({
+          alert_threshold_days: '14',
+          alerts_enabled: 'true',
+        });
+
+      expect(response.status).toBe(200);
+
+      // Verify setting was persisted in database
+      const db = getDb();
+      const settings = getAlertSettings(db);
+      expect(settings.alert_threshold_days).toBe(14);
+    });
+
+    it('AC3.5: POST /settings/gmail should persist credentials', async () => {
+      const { createApp } = await import('../src/server');
+      const supertest = await import('supertest');
+      const request = supertest.default;
+      const app = createApp();
+      const sessionCookie = await setupAuthenticatedSession(app);
+
+      // Submit form with Gmail credentials using authenticated session
+      const response = await request(app)
+        .post('/settings/gmail')
+        .set('Cookie', sessionCookie)
+        .set('HX-Request', 'true')
+        .send({
+          gmail_user: 'myemail@gmail.com',
+          gmail_app_password: 'app-password-16-chars',
+          alert_recipient_email: 'alerts@example.com',
+        });
+
+      expect(response.status).toBe(200);
+
+      // Verify settings were persisted in database
+      const db = getDb();
+      const settings = getAlertSettings(db);
+      expect(settings.gmail_user).toBe('myemail@gmail.com');
+      expect(settings.gmail_app_password).toBe('app-password-16-chars');
+      expect(settings.alert_recipient_email).toBe('alerts@example.com');
     });
   });
 });

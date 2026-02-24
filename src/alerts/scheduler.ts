@@ -118,7 +118,6 @@ export async function runAlertScheduler(db: Database.Database): Promise<void> {
 
   // Format and send digest email
   const htmlBody = formatDigestHtml(alerts);
-  _formatDigestPlainText(alerts); // Ensure we validate formatting
 
   // Create transport and send
   const transport = createMailTransport(settings.gmail_user, settings.gmail_app_password);
@@ -126,7 +125,6 @@ export async function runAlertScheduler(db: Database.Database): Promise<void> {
     transport,
     settings.alert_recipient_email,
     settings.gmail_user,
-    alerts,
     htmlBody
   );
 
@@ -142,11 +140,6 @@ export async function runAlertScheduler(db: Database.Database): Promise<void> {
   }
 
   transport.close();
-}
-
-// Helper to validate digest formatting (for testing)
-function _formatDigestPlainText(alerts: AlertItem[]): string {
-  return formatDigestPlainText(alerts);
 }
 
 // Re-export digest formatting functions for testing

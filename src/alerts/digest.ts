@@ -9,7 +9,7 @@ export interface AlertItem {
 /**
  * Format alerts as HTML for email digest
  */
-export function formatDigestHtml(alerts: AlertItem[]): string {
+export function formatDigestHtml(alerts: AlertItem[], baseUrl: string = 'http://localhost:3000'): string {
   const now = new Date();
   const dateStr = now.toLocaleDateString('en-US', {
     year: 'numeric',
@@ -64,7 +64,7 @@ export function formatDigestHtml(alerts: AlertItem[]): string {
 
         <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
         <p style="color: #999; font-size: 14px; text-align: center;">
-          <a href="http://localhost:3000" style="color: #1a73e8; text-decoration: none;">Open Job Tracker</a>
+          <a href="${baseUrl}" style="color: #1a73e8; text-decoration: none;">Open Job Tracker</a>
         </p>
       </div>
     </body>
@@ -75,7 +75,7 @@ export function formatDigestHtml(alerts: AlertItem[]): string {
 /**
  * Format alerts as plain text for email fallback
  */
-export function formatDigestPlainText(alerts: AlertItem[]): string {
+export function formatDigestPlainText(alerts: AlertItem[], baseUrl: string = 'http://localhost:3000'): string {
   const now = new Date();
   const dateStr = now.toLocaleDateString('en-US', {
     year: 'numeric',
@@ -108,7 +108,7 @@ export function formatDigestPlainText(alerts: AlertItem[]): string {
   }
 
   text += '---\n';
-  text += 'Open Job Tracker: http://localhost:3000\n';
+  text += `Open Job Tracker: ${baseUrl}\n`;
 
   return text;
 }

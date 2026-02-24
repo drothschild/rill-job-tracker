@@ -775,7 +775,12 @@ export function getActiveJobsForAlerts(db: Database.Database): JobForAlert[] {
     WHERE s.name NOT IN ('Rejected', 'Offer')
     ORDER BY j.updated_at DESC
   `);
-  return stmt.all() as JobForAlert[];
+  // SQLite returns 0/1 for boolean expressions, so we need to convert them
+  const rows = stmt.all() as unknown[];
+  return rows.map((row: any) => ({
+    ...row,
+    follow_up_date_passed: row.follow_up_date_passed === 1,
+  })) as JobForAlert[];
 }
 
 /**
