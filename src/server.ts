@@ -12,6 +12,8 @@ import jobRoutes from './routes/jobs';
 import contactRoutes from './routes/contacts';
 import pipelineRoutes from './routes/pipeline';
 import dashboardRoutes from './routes/dashboard';
+import settingsRoutes from './routes/settings';
+import { startAlertScheduler } from './alerts/scheduler';
 
 export function createApp(): express.Application {
   const app = express();
@@ -64,6 +66,9 @@ export function createApp(): express.Application {
   // Mount pipeline routes
   app.use('/pipeline', pipelineRoutes);
 
+  // Mount settings routes
+  app.use('/settings', settingsRoutes);
+
   // Health check route
   app.get('/health', (_req, res) => {
     const stages = db.prepare('SELECT * FROM stages ORDER BY display_order').all();
@@ -75,24 +80,29 @@ export function createApp(): express.Application {
 
 if (require.main === module) {
   const app = createApp();
+  const db = getDb();
   const PORT = parseInt(process.env.PORT || '3000', 10);
 
   const server = app.listen(PORT, () => {
     console.log(`Job tracker running on http://localhost:${PORT}`);
-  });
 
-  // Graceful shutdown
-  process.on('SIGTERM', () => {
-    server.close(() => {
-      closeDb();
-      process.exit(0);
-    });
-  });
+    // Start the alert scheduler after server starts
+    const alertSchedulerTask = startAlertScheduler(db);
 
-  process.on('SIGINT', () => {
-    server.close(() => {
-      closeDb();
-      process.exit(0);
-    });
+    // Graceful shutdown
+    const shutdown = () => {
+      console.log('Shutting down gracefully...');
+      // Stop the alert scheduler
+      if (alertSchedulerTask) {
+        alertSchedulerTask.stop();
+      }
+      server.close(() => {
+        closeDb();
+        process.exit(0);
+      });
+    };
+
+    process.on('SIGTERM', shutdown);
+    process.on('SIGINT', shutdown);
   });
 }
