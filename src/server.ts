@@ -13,6 +13,7 @@ import contactRoutes from './routes/contacts';
 import pipelineRoutes from './routes/pipeline';
 import dashboardRoutes from './routes/dashboard';
 import settingsRoutes from './routes/settings';
+import exportRoutes from './routes/export';
 import { startAlertScheduler } from './alerts/scheduler';
 
 export function createApp(): express.Application {
@@ -68,6 +69,9 @@ export function createApp(): express.Application {
 
   // Mount settings routes
   app.use('/settings', settingsRoutes);
+
+  // Mount export route
+  app.use('/export', exportRoutes);
 
   // Health check route
   app.get('/health', (_req, res) => {
