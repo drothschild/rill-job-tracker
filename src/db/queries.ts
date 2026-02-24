@@ -526,21 +526,21 @@ export function getJobsByStage(db: Database.Database): JobsByStage[] {
     if (row.id !== null) {
       groupedByStage[row.stageId].jobs.push({
         id: row.id,
-        company_name: row.company_name,
-        role: row.role,
+        company_name: row.company_name!,
+        role: row.role!,
         link: row.link,
         salary_min: row.salary_min,
         salary_max: row.salary_max,
         application_type: row.application_type as 'warm' | 'cold',
         job_description: row.job_description,
         location: row.location,
-        current_stage_id: row.current_stage_id,
+        current_stage_id: row.current_stage_id!,
         follow_up_date: row.follow_up_date,
         last_alert_sent_at: row.last_alert_sent_at,
-        created_at: row.created_at,
-        updated_at: row.updated_at,
+        created_at: row.created_at!,
+        updated_at: row.updated_at!,
         stage_name: row.stage_name,
-      });
+      } as Job);
     }
   });
 
@@ -619,4 +619,83 @@ export function updateJobStage(
     throw new Error('Failed to retrieve updated job');
   }
   return job;
+}
+
+// ============================================================================
+// Dashboard Queries
+// ============================================================================
+
+export interface DashboardJob extends Omit<Job, 'stage_name'> {
+  stage_name: string;
+}
+
+export interface ApplicationCountByDate {
+  date: string;
+  count: number;
+}
+
+/**
+ * Get all jobs with their current stage names for dashboard metrics
+ */
+export function getJobsForDashboard(db: Database.Database): DashboardJob[] {
+  const stmt = db.prepare(`
+    SELECT
+      j.*,
+      s.name as stage_name
+    FROM jobs j
+    LEFT JOIN stages s ON j.current_stage_id = s.id
+    ORDER BY j.updated_at DESC
+  `);
+  return stmt.all() as DashboardJob[];
+}
+
+/**
+ * Get count of applications by date (created_at), ordered chronologically
+ */
+export function getApplicationsOverTime(db: Database.Database): ApplicationCountByDate[] {
+  const stmt = db.prepare(`
+    SELECT
+      DATE(created_at) as date,
+      COUNT(*) as count
+    FROM jobs
+    GROUP BY DATE(created_at)
+    ORDER BY DATE(created_at) ASC
+  `);
+  return stmt.all() as ApplicationCountByDate[];
+}
+
+/**
+ * Get jobs with overdue follow-up dates that are not in terminal stages
+ */
+export function getJobsWithOverdueFollowUp(db: Database.Database): DashboardJob[] {
+  const stmt = db.prepare(`
+    SELECT
+      j.*,
+      s.name as stage_name
+    FROM jobs j
+    LEFT JOIN stages s ON j.current_stage_id = s.id
+    WHERE j.follow_up_date IS NOT NULL
+      AND j.follow_up_date < datetime('now')
+      AND s.name NOT IN ('Rejected', 'Offer')
+    ORDER BY j.follow_up_date ASC
+  `);
+  return stmt.all() as DashboardJob[];
+}
+
+/**
+ * Get jobs with no recent activity (not updated within threshold days)
+ * that are not in terminal stages
+ */
+export function getStaleJobs(db: Database.Database, thresholdDays: number): DashboardJob[] {
+  const stmt = db.prepare(`
+    SELECT
+      j.*,
+      s.name as stage_name
+    FROM jobs j
+    LEFT JOIN stages s ON j.current_stage_id = s.id
+    WHERE j.updated_at < datetime('now', ? || ' days')
+      AND s.name NOT IN ('Rejected', 'Offer')
+    ORDER BY j.updated_at DESC
+  `);
+  return stmt.all(`-${thresholdDays}`) as DashboardJob[];
 }
