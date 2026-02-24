@@ -398,3 +398,197 @@ export function deleteNote(db: Database.Database, id: number): void {
   const stmt = db.prepare('DELETE FROM notes WHERE id = ?');
   stmt.run(id);
 }
+
+// ============================================================================
+// Stages and Stage Transitions
+// ============================================================================
+
+export interface Stage {
+  id: number;
+  name: string;
+  display_order: number;
+}
+
+export interface StageTransition {
+  id: number;
+  job_id: number;
+  from_stage_id: number | null;
+  to_stage_id: number;
+  from_stage_name?: string;
+  to_stage_name?: string;
+  sub_label: string | null;
+  transitioned_at: string;
+}
+
+export interface CreateStageTransitionData {
+  job_id: number;
+  from_stage_id: number;
+  to_stage_id: number;
+  sub_label?: string;
+}
+
+export interface JobsByStage {
+  stageId: number;
+  stageName: string;
+  jobs: Job[];
+}
+
+export function getAllStages(db: Database.Database): Stage[] {
+  const stmt = db.prepare(`
+    SELECT *
+    FROM stages
+    ORDER BY display_order
+  `);
+  return stmt.all() as Stage[];
+}
+
+export function getStageByName(db: Database.Database, name: string): Stage | undefined {
+  const stmt = db.prepare(`
+    SELECT *
+    FROM stages
+    WHERE name = ?
+  `);
+  return stmt.get(name) as Stage | undefined;
+}
+
+export function getStageById(db: Database.Database, id: number): Stage | undefined {
+  const stmt = db.prepare(`
+    SELECT *
+    FROM stages
+    WHERE id = ?
+  `);
+  return stmt.get(id) as Stage | undefined;
+}
+
+export function getJobsByStage(db: Database.Database): JobsByStage[] {
+  const stmt = db.prepare(`
+    SELECT
+      s.id as stageId,
+      s.name as stageName,
+      j.id,
+      j.company_name,
+      j.role,
+      j.link,
+      j.salary_min,
+      j.salary_max,
+      j.application_type,
+      j.job_description,
+      j.location,
+      j.current_stage_id,
+      j.follow_up_date,
+      j.last_alert_sent_at,
+      j.created_at,
+      j.updated_at,
+      s.name as stage_name
+    FROM stages s
+    LEFT JOIN jobs j ON j.current_stage_id = s.id
+    ORDER BY s.display_order, j.updated_at DESC
+  `);
+
+  const results = stmt.all() as any[];
+  const groupedByStage: { [key: number]: JobsByStage } = {};
+
+  results.forEach((row) => {
+    if (!groupedByStage[row.stageId]) {
+      groupedByStage[row.stageId] = {
+        stageId: row.stageId,
+        stageName: row.stageName,
+        jobs: [],
+      };
+    }
+    if (row.id !== null) {
+      groupedByStage[row.stageId].jobs.push({
+        id: row.id,
+        company_name: row.company_name,
+        role: row.role,
+        link: row.link,
+        salary_min: row.salary_min,
+        salary_max: row.salary_max,
+        application_type: row.application_type,
+        job_description: row.job_description,
+        location: row.location,
+        current_stage_id: row.current_stage_id,
+        follow_up_date: row.follow_up_date,
+        last_alert_sent_at: row.last_alert_sent_at,
+        created_at: row.created_at,
+        updated_at: row.updated_at,
+        stage_name: row.stage_name,
+      });
+    }
+  });
+
+  return Object.values(groupedByStage);
+}
+
+export function createStageTransition(
+  db: Database.Database,
+  data: CreateStageTransitionData
+): StageTransition {
+  const stmt = db.prepare(`
+    INSERT INTO stage_transitions (job_id, from_stage_id, to_stage_id, sub_label)
+    VALUES (?, ?, ?, ?)
+  `);
+
+  const info = stmt.run(
+    data.job_id,
+    data.from_stage_id,
+    data.to_stage_id,
+    data.sub_label || null
+  );
+
+  const transition = db
+    .prepare(`
+      SELECT
+        st.*,
+        fs.name as from_stage_name,
+        ts.name as to_stage_name
+      FROM stage_transitions st
+      LEFT JOIN stages fs ON st.from_stage_id = fs.id
+      LEFT JOIN stages ts ON st.to_stage_id = ts.id
+      WHERE st.id = ?
+    `)
+    .get(info.lastInsertRowid);
+
+  if (!transition) {
+    throw new Error('Failed to retrieve created stage transition');
+  }
+  return transition as StageTransition;
+}
+
+export function getStageTransitionsByJobId(
+  db: Database.Database,
+  jobId: number
+): StageTransition[] {
+  const stmt = db.prepare(`
+    SELECT
+      st.*,
+      fs.name as from_stage_name,
+      ts.name as to_stage_name
+    FROM stage_transitions st
+    LEFT JOIN stages fs ON st.from_stage_id = fs.id
+    LEFT JOIN stages ts ON st.to_stage_id = ts.id
+    WHERE st.job_id = ?
+    ORDER BY st.transitioned_at DESC
+  `);
+  return stmt.all(jobId) as StageTransition[];
+}
+
+export function updateJobStage(
+  db: Database.Database,
+  jobId: number,
+  stageId: number
+): Job {
+  const stmt = db.prepare(`
+    UPDATE jobs
+    SET current_stage_id = ?, updated_at = datetime('now')
+    WHERE id = ?
+  `);
+
+  stmt.run(stageId, jobId);
+
+  const job = getJobById(db, jobId);
+  if (!job) {
+    throw new Error('Failed to retrieve updated job');
+  }
+  return job;
+}
