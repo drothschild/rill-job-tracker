@@ -11,6 +11,7 @@ import authRoutes from './routes/auth';
 import jobRoutes from './routes/jobs';
 import contactRoutes from './routes/contacts';
 import pipelineRoutes from './routes/pipeline';
+import dashboardRoutes from './routes/dashboard';
 
 export function createApp(): express.Application {
   const app = express();
@@ -48,6 +49,9 @@ export function createApp(): express.Application {
   // Apply auth middleware
   app.use(authMiddleware);
 
+  // Mount dashboard routes at root
+  app.use('/', dashboardRoutes);
+
   // Mount auth routes
   app.use('/auth', authRoutes);
 
@@ -59,36 +63,6 @@ export function createApp(): express.Application {
 
   // Mount pipeline routes
   app.use('/pipeline', pipelineRoutes);
-
-  // Root dashboard route (placeholder)
-  app.get('/', (_req, res) => {
-    res.send(`
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Dashboard</title>
-        <style>
-          body { font-family: sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
-          .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-          h1 { color: #333; }
-          .logout-btn { padding: 10px 20px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; }
-          .logout-btn:hover { background: #c82333; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <h1>Dashboard</h1>
-          <p>Welcome to the Job Tracker.</p>
-          <form method="POST" action="/auth/logout" style="display: inline;">
-            <button type="submit" class="logout-btn">Logout</button>
-          </form>
-        </div>
-      </body>
-      </html>
-    `);
-  });
 
   // Health check route
   app.get('/health', (_req, res) => {
