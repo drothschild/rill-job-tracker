@@ -1,0 +1,38 @@
+{
+  "name": "rill-job-tracker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Personal job application tracker with Rill rule engine",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "start": "tsx src/server.ts",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "better-sqlite3": "^12.6.2",
+    "better-sqlite3-session-store": "^0.1.0",
+    "express": "^4.21.0",
+    "express-session": "^1.18.1",
+    "node-cron": "^4.2.1",
+    "nodemailer": "^8.0.1",
+    "rill-lang": "file:../../Projects/rill-lang",
+    "tsx": "^4.21.0"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/express": "^5.0.0",
+    "@types/express-session": "^1.18.1",
+    "@types/node": "^22.0.0",
+    "@types/node-cron": "^3.0.11",
+    "@types/nodemailer": "^6.4.17",
+    "@types/supertest": "^6.0.0",
+    "supertest": "^7.0.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}
