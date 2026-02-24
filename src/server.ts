@@ -8,6 +8,8 @@ import { createSchema } from './db/schema';
 import { seedStages } from './db/seed';
 import { authMiddleware } from './middleware/auth';
 import authRoutes from './routes/auth';
+import jobRoutes from './routes/jobs';
+import contactRoutes from './routes/contacts';
 
 export function createApp(): express.Application {
   const app = express();
@@ -47,6 +49,12 @@ export function createApp(): express.Application {
 
   // Mount auth routes
   app.use('/auth', authRoutes);
+
+  // Mount job routes
+  app.use('/jobs', jobRoutes);
+
+  // Mount contact routes (nested under jobs/:jobId)
+  app.use('/jobs/:jobId/contacts', contactRoutes);
 
   // Root dashboard route (placeholder)
   app.get('/', (_req, res) => {

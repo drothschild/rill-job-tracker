@@ -155,7 +155,7 @@ export function updateJob(
   }
 
   // Always update updated_at
-  updates.push('updated_at = datetime("now")');
+  updates.push("updated_at = datetime('now')");
   values.push(id);
 
   const stmt = db.prepare(`
