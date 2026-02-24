@@ -6,7 +6,7 @@ import { getDb } from '../db/connection';
 const router = Router();
 
 // GET /auth/login - Render login page
-router.get('/login', (_req: Request, res: Response): void => {
+router.get('/login', (req: Request, res: Response): void => {
   // Check if password hash exists
   const db = getDb();
   const passwordHash = db
@@ -20,9 +20,9 @@ router.get('/login', (_req: Request, res: Response): void => {
   }
 
   // Render login page
-  const errorMessage = _req.session.loginError || '';
-  delete _req.session.loginError;
-  _req.session.save(() => {
+  const errorMessage = req.session.loginError || '';
+  delete req.session.loginError;
+  req.session.save(() => {
     res.send(`
       <!DOCTYPE html>
       <html lang="en">
@@ -61,7 +61,7 @@ router.get('/login', (_req: Request, res: Response): void => {
 });
 
 // GET /auth/setup - Render first-run setup page
-router.get('/setup', (_req: Request, res: Response): void => {
+router.get('/setup', (req: Request, res: Response): void => {
   const db = getDb();
   const passwordHash = db
     .prepare("SELECT value FROM settings WHERE key = 'password_hash'")
@@ -74,9 +74,9 @@ router.get('/setup', (_req: Request, res: Response): void => {
   }
 
   // Render setup page
-  const errorMessage = _req.session.setupError || '';
-  delete _req.session.setupError;
-  _req.session.save(() => {
+  const errorMessage = req.session.setupError || '';
+  delete req.session.setupError;
+  req.session.save(() => {
     res.send(`
       <!DOCTYPE html>
       <html lang="en">
@@ -121,6 +121,18 @@ router.get('/setup', (_req: Request, res: Response): void => {
 
 // POST /auth/setup - Create initial password
 router.post('/setup', async (req: Request, res: Response): Promise<void> => {
+  // Security: Check if password already exists - prevent overwrite
+  const db = getDb();
+  const existingPasswordHash = db
+    .prepare("SELECT value FROM settings WHERE key = 'password_hash'")
+    .get() as { value: string } | undefined;
+
+  if (existingPasswordHash) {
+    // Password already set - redirect to login
+    res.redirect('/auth/login');
+    return;
+  }
+
   const { password, confirm_password } = req.body;
 
   // Validate inputs

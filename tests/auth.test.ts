@@ -215,6 +215,55 @@ describe('Authentication (AC2)', () => {
       expect(response.status).toBe(200);
       expect(response.text).toContain('Initial Setup');
     });
+
+    it('should reject POST /auth/setup when password already exists (prevent overwrite)', async () => {
+      const app = createApp();
+
+      // Step 1: Set up initial password
+      const setupRes = await request(app)
+        .post('/auth/setup')
+        .send({
+          password: 'OriginalPassword123!',
+          confirm_password: 'OriginalPassword123!',
+        });
+
+      expect(setupRes.status).toBe(302);
+      expect(setupRes.headers.location).toBe('/');
+
+      // Step 2: Attempt to overwrite with a new password (unauthenticated)
+      const overwriteRes = await request(app)
+        .post('/auth/setup')
+        .send({
+          password: 'NewPassword456!',
+          confirm_password: 'NewPassword456!',
+        });
+
+      // Step 3: Verify the overwrite is rejected (302 redirect to login)
+      expect(overwriteRes.status).toBe(302);
+      expect(overwriteRes.headers.location).toBe('/auth/login');
+
+      // Step 4: Verify original password still works
+      const app2 = createApp();
+      const originalLoginRes = await request(app2)
+        .post('/auth/login')
+        .send({
+          password: 'OriginalPassword123!',
+        });
+
+      expect(originalLoginRes.status).toBe(302);
+      expect(originalLoginRes.headers.location).toBe('/');
+
+      // Step 5: Verify new password does NOT work
+      const app3 = createApp();
+      const newLoginRes = await request(app3)
+        .post('/auth/login')
+        .send({
+          password: 'NewPassword456!',
+        });
+
+      expect(newLoginRes.status).toBe(302);
+      expect(newLoginRes.headers.location).toBe('/auth/login');
+    });
   });
 
   describe('AC2.2: Login with correct password', () => {
