@@ -45,20 +45,31 @@ export function jobDetailView(
 
   const renderContactCard = (contact: Contact): string => {
     return `
-      <div class="bg-gray-50 rounded-lg p-3 sm:p-4 border border-gray-200">
+      <div id="contact-card-${contact.id}" class="bg-gray-50 rounded-lg p-3 sm:p-4 border border-gray-200">
         <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-3">
           <div class="min-w-0">
             <h4 class="font-bold text-gray-900 break-words">${escapeHtml(contact.name)}</h4>
             ${contact.role ? `<p class="text-xs sm:text-sm text-gray-600 break-words">${escapeHtml(contact.role)}</p>` : ''}
           </div>
-          <button
-            hx-delete="/jobs/${job.id}/contacts/${contact.id}"
-            hx-target="#contacts-section"
-            hx-confirm="Delete this contact?"
-            class="w-full sm:w-auto px-3 py-1 text-red-600 hover:text-red-800 text-xs sm:text-sm font-medium"
-          >
-            Delete
-          </button>
+          <div class="flex gap-2">
+            <button
+              hx-get="/jobs/${job.id}/contacts/${contact.id}/edit"
+              hx-target="#contact-card-${contact.id}"
+              hx-swap="outerHTML"
+              class="w-full sm:w-auto px-3 py-1 text-blue-600 hover:text-blue-800 text-xs sm:text-sm font-medium"
+            >
+              Edit
+            </button>
+            <button
+              hx-delete="/jobs/${job.id}/contacts/${contact.id}"
+              hx-target="#contact-card-${contact.id}"
+              hx-swap="outerHTML"
+              hx-confirm="Delete this contact?"
+              class="w-full sm:w-auto px-3 py-1 text-red-600 hover:text-red-800 text-xs sm:text-sm font-medium"
+            >
+              Delete
+            </button>
+          </div>
         </div>
 
         <!-- Contact details -->

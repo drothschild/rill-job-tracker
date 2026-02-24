@@ -90,7 +90,6 @@ export function jobListView(jobs: Job[]): string {
         <!-- View Details Link -->
         <a
           href="/jobs/${job.id}"
-          hx-boost="true"
           class="inline-block text-blue-600 hover:text-blue-800 font-medium text-xs sm:text-sm"
         >
           View Details →

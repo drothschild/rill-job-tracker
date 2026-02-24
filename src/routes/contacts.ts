@@ -18,6 +18,86 @@ import { escapeHtml, formatDate } from '../views/helpers';
 const router = Router({ mergeParams: true });
 
 /**
+ * GET /jobs/:jobId/contacts/new - Render add contact form
+ */
+router.get('/new', (req: Request, res: Response): void => {
+  const jobIdParam = Array.isArray(req.params.jobId) ? req.params.jobId[0] : req.params.jobId;
+  const jobId = parseInt(jobIdParam, 10);
+
+  const job = getJobById(getDb(), jobId);
+  if (!job) {
+    res.status(404).send('Job not found');
+    return;
+  }
+
+  const html = `
+    <form hx-post="/jobs/${jobId}/contacts" hx-target="#contacts-section" class="space-y-3">
+      <div>
+        <input type="text" name="name" placeholder="Contact name *" required class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm text-gray-900 bg-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm" />
+      </div>
+      <div>
+        <input type="text" name="role" placeholder="Role (e.g. Recruiter, Hiring Manager)" class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm text-gray-900 bg-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm" />
+      </div>
+      <div>
+        <input type="email" name="email" placeholder="Email" class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm text-gray-900 bg-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm" />
+      </div>
+      <div>
+        <input type="url" name="linkedin_url" placeholder="LinkedIn URL" class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm text-gray-900 bg-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm" />
+      </div>
+      <div>
+        <textarea name="notes" rows="2" placeholder="Notes" class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm text-gray-900 bg-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"></textarea>
+      </div>
+      <div class="flex gap-2">
+        <button type="submit" class="flex-1 px-3 py-2 bg-green-600 text-white rounded text-sm hover:bg-green-700 font-medium">Save</button>
+        <button type="button" hx-get="/jobs/${jobId}" hx-target="#contacts-section" hx-select="#contacts-section" class="flex-1 px-3 py-2 bg-gray-200 text-gray-800 rounded text-sm hover:bg-gray-300 font-medium">Cancel</button>
+      </div>
+    </form>
+  `;
+  res.send(html);
+});
+
+/**
+ * GET /jobs/:jobId/contacts/:id/edit - Render inline edit form for a contact
+ */
+router.get('/:id/edit', (req: Request, res: Response): void => {
+  const db = getDb();
+  const jobIdParam = Array.isArray(req.params.jobId) ? req.params.jobId[0] : req.params.jobId;
+  const idParam = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const jobId = parseInt(jobIdParam, 10);
+  const contactId = parseInt(idParam, 10);
+
+  const job = getJobById(db, jobId);
+  if (!job) {
+    res.status(404).send('Job not found');
+    return;
+  }
+
+  const contacts = getContactsByJobId(db, jobId);
+  const contact = contacts.find((c) => c.id === contactId);
+  if (!contact) {
+    res.status(404).send('Contact not found');
+    return;
+  }
+
+  const html = `
+    <div id="contact-card-${contactId}" class="bg-gray-50 rounded-lg p-3 sm:p-4 border border-gray-200">
+      <form hx-put="/jobs/${jobId}/contacts/${contactId}" hx-target="#contact-card-${contactId}" hx-swap="outerHTML" class="space-y-3">
+        <div><input type="text" name="name" value="${escapeHtml(contact.name)}" required class="w-full px-3 py-2 border border-gray-300 rounded text-gray-900 bg-white text-sm" /></div>
+        <div><input type="text" name="role" value="${escapeHtml(contact.role || '')}" placeholder="Role" class="w-full px-3 py-2 border border-gray-300 rounded text-gray-900 bg-white text-sm" /></div>
+        <div><input type="email" name="email" value="${escapeHtml(contact.email || '')}" placeholder="Email" class="w-full px-3 py-2 border border-gray-300 rounded text-gray-900 bg-white text-sm" /></div>
+        <div><input type="url" name="linkedin_url" value="${escapeHtml(contact.linkedin_url || '')}" placeholder="LinkedIn URL" class="w-full px-3 py-2 border border-gray-300 rounded text-gray-900 bg-white text-sm" /></div>
+        <div><textarea name="notes" rows="2" placeholder="Notes" class="w-full px-3 py-2 border border-gray-300 rounded text-gray-900 bg-white text-sm">${escapeHtml(contact.notes || '')}</textarea></div>
+        <div class="flex gap-2">
+          <button type="submit" class="flex-1 px-3 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 font-medium">Update</button>
+          <button type="button" hx-get="/jobs/${jobId}" hx-target="#contacts-section" hx-select="#contacts-section" class="flex-1 px-3 py-2 bg-gray-200 text-gray-800 rounded text-sm hover:bg-gray-300 font-medium">Cancel</button>
+        </div>
+      </form>
+    </div>
+  `;
+  res.send(html);
+});
+
+/**
  * POST /jobs/:jobId/contacts - Create contact for job
  */
 router.post('/', (req: Request, res: Response): void => {
@@ -127,34 +207,45 @@ router.put('/:id', (req: Request, res: Response): void => {
 
   const contact = updateContact(db, contactId, data);
 
-  // Return updated contact card partial
+  // Return updated contact card (outerHTML swap replaces the card in place)
   const html = `
-    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-      <div class="flex justify-between items-start mb-3">
-        <div>
-          <h4 class="font-bold text-gray-900">${escapeHtml(contact.name)}</h4>
-          ${contact.role ? `<p class="text-sm text-gray-600">${escapeHtml(contact.role)}</p>` : ''}
+    <div id="contact-card-${contact.id}" class="bg-gray-50 rounded-lg p-3 sm:p-4 border border-gray-200">
+      <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-3">
+        <div class="min-w-0">
+          <h4 class="font-bold text-gray-900 break-words">${escapeHtml(contact.name)}</h4>
+          ${contact.role ? `<p class="text-xs sm:text-sm text-gray-600 break-words">${escapeHtml(contact.role)}</p>` : ''}
         </div>
-        <button
-          hx-delete="/jobs/${jobId}/contacts/${contact.id}"
-          hx-target="#contacts-section"
-          hx-confirm="Delete this contact?"
-          class="text-red-600 hover:text-red-800 text-sm font-medium"
-        >
-          Delete
-        </button>
+        <div class="flex gap-2">
+          <button
+            hx-get="/jobs/${jobId}/contacts/${contact.id}/edit"
+            hx-target="#contact-card-${contact.id}"
+            hx-swap="outerHTML"
+            class="w-full sm:w-auto px-3 py-1 text-blue-600 hover:text-blue-800 text-xs sm:text-sm font-medium"
+          >
+            Edit
+          </button>
+          <button
+            hx-delete="/jobs/${jobId}/contacts/${contact.id}"
+            hx-target="#contact-card-${contact.id}"
+            hx-swap="outerHTML"
+            hx-confirm="Delete this contact?"
+            class="w-full sm:w-auto px-3 py-1 text-red-600 hover:text-red-800 text-xs sm:text-sm font-medium"
+          >
+            Delete
+          </button>
+        </div>
       </div>
 
       <!-- Contact details -->
-      <div class="space-y-1 text-sm mb-3">
-        ${contact.email ? `<p><a href="mailto:${escapeHtml(contact.email)}" class="text-blue-600 hover:text-blue-800">${escapeHtml(contact.email)}</a></p>` : ''}
-        ${contact.linkedin_url ? `<p><a href="${escapeHtml(contact.linkedin_url)}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800">LinkedIn Profile →</a></p>` : ''}
-        ${contact.notes ? `<p class="text-gray-600"><strong>Notes:</strong> ${escapeHtml(contact.notes)}</p>` : ''}
+      <div class="space-y-1 text-xs sm:text-sm mb-3">
+        ${contact.email ? `<p><a href="mailto:${escapeHtml(contact.email)}" class="text-blue-600 hover:text-blue-800 break-all">${escapeHtml(contact.email)}</a></p>` : ''}
+        ${contact.linkedin_url ? `<p><a href="${escapeHtml(contact.linkedin_url)}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 break-all">LinkedIn Profile →</a></p>` : ''}
+        ${contact.notes ? `<p class="text-gray-600 break-words"><strong>Notes:</strong> ${escapeHtml(contact.notes)}</p>` : ''}
       </div>
 
       <!-- Interactions section would be populated here -->
       <div class="mt-3 pt-3 border-t border-gray-300">
-        <details class="text-sm">
+        <details class="text-xs sm:text-sm">
           <summary class="cursor-pointer font-medium text-gray-700 hover:text-gray-900">
             Interactions (0)
           </summary>
