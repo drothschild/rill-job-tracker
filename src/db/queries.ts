@@ -699,3 +699,93 @@ export function getStaleJobs(db: Database.Database, thresholdDays: number): Dash
   `);
   return stmt.all(`-${thresholdDays}`) as DashboardJob[];
 }
+
+// ============================================================================
+// Settings
+// ============================================================================
+
+/**
+ * Get a single setting value by key
+ */
+export function getSetting(db: Database.Database, key: string): string | null {
+  const stmt = db.prepare(`
+    SELECT value
+    FROM settings
+    WHERE key = ?
+  `);
+  const result = stmt.get(key) as { value: string } | undefined;
+  return result ? result.value : null;
+}
+
+/**
+ * Set a setting value (INSERT OR REPLACE)
+ */
+export function setSetting(db: Database.Database, key: string, value: string): void {
+  const stmt = db.prepare(`
+    INSERT OR REPLACE INTO settings (key, value)
+    VALUES (?, ?)
+  `);
+  stmt.run(key, value);
+}
+
+/**
+ * Alert settings object type
+ */
+export interface AlertSettings {
+  alert_threshold_days: number;
+  gmail_user: string;
+  gmail_app_password: string;
+  alert_recipient_email: string;
+  alerts_enabled: string;
+}
+
+/**
+ * Get all alert-related settings with defaults
+ */
+export function getAlertSettings(db: Database.Database): AlertSettings {
+  return {
+    alert_threshold_days: parseInt(getSetting(db, 'alert_threshold_days') || '7', 10),
+    gmail_user: getSetting(db, 'gmail_user') || '',
+    gmail_app_password: getSetting(db, 'gmail_app_password') || '',
+    alert_recipient_email: getSetting(db, 'alert_recipient_email') || '',
+    alerts_enabled: getSetting(db, 'alerts_enabled') || 'false',
+  };
+}
+
+/**
+ * Job for alert evaluation with computed fields
+ */
+export interface JobForAlert extends Job {
+  days_since_update: number;
+  follow_up_date_passed: boolean;
+}
+
+/**
+ * Get active jobs (not in Rejected or Offer stages) with computed alert fields
+ */
+export function getActiveJobsForAlerts(db: Database.Database): JobForAlert[] {
+  const stmt = db.prepare(`
+    SELECT
+      j.*,
+      s.name as stage_name,
+      CAST(julianday('now') - julianday(j.updated_at) AS INTEGER) as days_since_update,
+      (j.follow_up_date IS NOT NULL AND j.follow_up_date < datetime('now')) as follow_up_date_passed
+    FROM jobs j
+    LEFT JOIN stages s ON j.current_stage_id = s.id
+    WHERE s.name NOT IN ('Rejected', 'Offer')
+    ORDER BY j.updated_at DESC
+  `);
+  return stmt.all() as JobForAlert[];
+}
+
+/**
+ * Update the last_alert_sent_at timestamp for a job
+ */
+export function updateJobAlertSentAt(db: Database.Database, jobId: number): void {
+  const stmt = db.prepare(`
+    UPDATE jobs
+    SET last_alert_sent_at = datetime('now')
+    WHERE id = ?
+  `);
+  stmt.run(jobId);
+}
