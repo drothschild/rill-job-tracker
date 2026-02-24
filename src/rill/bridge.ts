@@ -1,5 +1,5 @@
 import { readFileSync } from 'fs';
-import { lex, parse, evaluate, createPrelude, Value, prettyPrint } from 'rill-lang';
+import { lex, parse, evaluate, createPrelude, Value } from 'rill-lang';
 
 // JS → Rill conversion
 export function jsToRill(value: unknown): Value {
@@ -78,8 +78,9 @@ export function evaluateRule(
   try {
     const source = readFileSync(rulePath, 'utf-8');
     return evaluateSource(source, data);
-  } catch (err: any) {
-    return { success: false, value: null, error: err.message };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    return { success: false, value: null, error: message };
   }
 }
 
@@ -97,7 +98,8 @@ export function evaluateSource(
     const ast = parse(tokens);
     const result = evaluate(ast, env);
     return { success: true, value: rillToJs(result) };
-  } catch (err: any) {
-    return { success: false, value: null, error: err.message };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    return { success: false, value: null, error: message };
   }
 }
