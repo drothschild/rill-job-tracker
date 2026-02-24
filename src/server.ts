@@ -10,6 +10,7 @@ import { authMiddleware } from './middleware/auth';
 import authRoutes from './routes/auth';
 import jobRoutes from './routes/jobs';
 import contactRoutes from './routes/contacts';
+import pipelineRoutes from './routes/pipeline';
 
 export function createApp(): express.Application {
   const app = express();
@@ -55,6 +56,9 @@ export function createApp(): express.Application {
 
   // Mount contact routes (nested under jobs/:jobId)
   app.use('/jobs/:jobId/contacts', contactRoutes);
+
+  // Mount pipeline routes
+  app.use('/pipeline', pipelineRoutes);
 
   // Root dashboard route (placeholder)
   app.get('/', (_req, res) => {
