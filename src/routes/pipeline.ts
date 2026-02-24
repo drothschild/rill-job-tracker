@@ -76,7 +76,7 @@ router.post('/transition', (req: Request, res: Response): void => {
     // Rill execution failed
     res.status(422).send(`
       <div class="bg-red-50 border border-red-200 rounded-lg p-4">
-        <p class="text-red-800 font-medium">Validation error: ${escapeHtml(ruleResult.error)}</p>
+        <p class="text-red-800 font-medium">Validation error: ${escapeHtml(ruleResult.error || 'Unknown error')}</p>
       </div>
     `);
     return;
