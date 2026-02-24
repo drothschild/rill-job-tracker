@@ -15,6 +15,7 @@ RUN npm ci
 COPY tsconfig.json ./
 COPY src/ ./src/
 COPY public/ ./public/
+COPY rules/ ./rules/
 
 # Create data directory
 RUN mkdir -p /data

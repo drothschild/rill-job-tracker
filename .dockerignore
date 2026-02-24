@@ -3,3 +3,6 @@ dist
 data
 .git
 *.md
+tests/
+docs/
+.test-db/
