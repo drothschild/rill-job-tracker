@@ -235,16 +235,17 @@ export function pipelineBoardView(stages: Stage[], jobsByStage: JobsByStage[]): 
             submitTransitionDrop(jobId, toStageId) {
               const subLabel = prompt('Optional: Enter a sub-label for this transition (e.g., "Technical Interview")');
 
-              const formData = new FormData();
-              formData.append('job_id', jobId);
-              formData.append('to_stage_id', toStageId);
+              const params = new URLSearchParams();
+              params.append('job_id', jobId);
+              params.append('to_stage_id', toStageId);
               if (subLabel) {
-                formData.append('sub_label', subLabel);
+                params.append('sub_label', subLabel);
               }
 
               fetch('/pipeline/transition', {
                 method: 'POST',
-                body: formData
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: params.toString()
               })
               .then(function(response) {
                 if (response.ok) {

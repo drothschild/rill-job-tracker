@@ -23,4 +23,10 @@ describe('pipelineBoardView drag-and-drop HTML', () => {
     const html = pipelineBoardView(stages, []);
     expect(html).toContain('Alpine.initTree');
   });
+
+  it('uses URLSearchParams not FormData for fetch so Express urlencoded parser can read the body', () => {
+    const html = pipelineBoardView(stages, []);
+    expect(html).not.toContain('new FormData()');
+    expect(html).toContain('URLSearchParams');
+  });
 });
