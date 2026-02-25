@@ -29,4 +29,9 @@ describe('pipelineBoardView drag-and-drop HTML', () => {
     expect(html).not.toContain('new FormData()');
     expect(html).toContain('URLSearchParams');
   });
+
+  it('does not call prompt() because it is blocked in sandboxed contexts and causes Alpine to silently abort the drop handler', () => {
+    const html = pipelineBoardView(stages, []);
+    expect(html).not.toContain('prompt(');
+  });
 });
