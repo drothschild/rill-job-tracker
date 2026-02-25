@@ -7,3 +7,4 @@ data/*.db-shm
 .docker-deps/
 .test-db/
 docs/
+.worktrees/
