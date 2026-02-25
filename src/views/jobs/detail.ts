@@ -117,7 +117,6 @@ export function jobDetailView(
             </div>
             <a
               href="/jobs/${job.id}/edit"
-              hx-boost="true"
               class="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm text-center"
             >
               Edit

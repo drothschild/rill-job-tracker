@@ -43,7 +43,6 @@ export function jobListView(jobs: Job[]): string {
         <p class="text-gray-500 text-lg mb-6">No jobs yet. Get started by adding your first job.</p>
         <a
           href="/jobs/new"
-          hx-boost="true"
           class="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
         >
           New Job
@@ -61,7 +60,6 @@ export function jobListView(jobs: Job[]): string {
         <div class="mb-4">
           <a
             href="/jobs/${job.id}"
-            hx-boost="true"
             class="text-lg sm:text-xl font-bold text-gray-900 hover:text-blue-600 block break-words"
           >
             ${escapeHtml(job.company_name)}
@@ -104,7 +102,6 @@ export function jobListView(jobs: Job[]): string {
     <div class="mb-6">
       <a
         href="/jobs/new"
-        hx-boost="true"
         class="inline-block px-4 sm:px-6 py-2 sm:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm sm:text-base"
       >
         New Job
