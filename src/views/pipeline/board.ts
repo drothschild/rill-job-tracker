@@ -185,82 +185,102 @@ export function pipelineBoardView(stages: Stage[], jobsByStage: JobsByStage[]): 
   // Alpine.js component with drag-and-drop and mobile functionality
   // NOTE: The Alpine.js logic is in a <script> block using Alpine.data() rather than
   // inline in x-data, because inline JS with > characters breaks HTML attribute parsing.
+  // NOTE: The component registration must handle two scenarios:
+  //   1. Full page load: Alpine not yet initialized, use alpine:init event
+  //   2. HTMX swap (mobile nav): Alpine already initialized, register directly + call initTree
   return `
     <script>
-      document.addEventListener('alpine:init', () => {
-        Alpine.data('pipelineBoard', () => ({
-          draggedJob: null,
-          draggedFromStage: null,
-          expandedSections: {},
+      (function() {
+        function registerPipelineBoard() {
+          Alpine.data('pipelineBoard', () => ({
+            draggedJob: null,
+            draggedFromStage: null,
+            expandedSections: {},
 
-          dragStart(event) {
-            this.draggedJob = event.currentTarget.dataset.jobId;
-            this.draggedFromStage = event.currentTarget.dataset.currentStage;
-            event.currentTarget.classList.add('opacity-50');
-          },
+            dragStart(event) {
+              this.draggedJob = event.currentTarget.dataset.jobId;
+              this.draggedFromStage = event.currentTarget.dataset.currentStage;
+              event.dataTransfer.setData('text/plain', this.draggedJob);
+              event.dataTransfer.effectAllowed = 'move';
+              event.currentTarget.classList.add('opacity-50');
+            },
 
-          dragEnd(event) {
-            event.currentTarget.classList.remove('opacity-50');
-          },
+            dragEnd(event) {
+              event.currentTarget.classList.remove('opacity-50');
+            },
 
-          dragOver(event) {
-            event.preventDefault();
-            event.currentTarget.classList.add('bg-blue-50');
-          },
+            dragOver(event) {
+              event.preventDefault();
+              event.dataTransfer.dropEffect = 'move';
+              event.currentTarget.classList.add('bg-blue-50');
+            },
 
-          dragLeave(event) {
-            event.currentTarget.classList.remove('bg-blue-50');
-          },
+            dragLeave(event) {
+              event.currentTarget.classList.remove('bg-blue-50');
+            },
 
-          drop(event, toStageId) {
-            event.preventDefault();
-            event.currentTarget.classList.remove('bg-blue-50');
+            drop(event, toStageId) {
+              event.preventDefault();
+              event.currentTarget.classList.remove('bg-blue-50');
 
-            if (this.draggedJob && this.draggedFromStage != toStageId) {
-              this.submitTransitionDrop(this.draggedJob, toStageId);
-            }
-          },
-
-          toggleSection(stageId) {
-            this.expandedSections[stageId] = !this.expandedSections[stageId];
-          },
-
-          submitTransitionDrop(jobId, toStageId) {
-            const subLabel = prompt('Optional: Enter a sub-label for this transition (e.g., "Technical Interview")');
-
-            const formData = new FormData();
-            formData.append('job_id', jobId);
-            formData.append('to_stage_id', toStageId);
-            if (subLabel) {
-              formData.append('sub_label', subLabel);
-            }
-
-            fetch('/pipeline/transition', {
-              method: 'POST',
-              body: formData
-            })
-            .then(function(response) {
-              if (response.ok) {
-                window.location.reload();
-              } else {
-                alert('Transition failed. Please try again.');
+              if (this.draggedJob && this.draggedFromStage != toStageId) {
+                this.submitTransitionDrop(this.draggedJob, toStageId);
               }
-            })
-            .catch(function(err) {
-              console.error('Transition error:', err);
-              alert('Error during transition');
-            });
-          },
+            },
 
-          submitTransition(event, jobId) {
-            event.preventDefault();
-            const toStageId = event.currentTarget.querySelector('select').value;
-            if (toStageId) {
-              this.submitTransitionDrop(jobId, toStageId);
+            toggleSection(stageId) {
+              this.expandedSections[stageId] = !this.expandedSections[stageId];
+            },
+
+            submitTransitionDrop(jobId, toStageId) {
+              const subLabel = prompt('Optional: Enter a sub-label for this transition (e.g., "Technical Interview")');
+
+              const formData = new FormData();
+              formData.append('job_id', jobId);
+              formData.append('to_stage_id', toStageId);
+              if (subLabel) {
+                formData.append('sub_label', subLabel);
+              }
+
+              fetch('/pipeline/transition', {
+                method: 'POST',
+                body: formData
+              })
+              .then(function(response) {
+                if (response.ok) {
+                  window.location.reload();
+                } else {
+                  alert('Transition failed. Please try again.');
+                }
+              })
+              .catch(function(err) {
+                console.error('Transition error:', err);
+                alert('Error during transition');
+              });
+            },
+
+            submitTransition(event, jobId) {
+              event.preventDefault();
+              const toStageId = event.currentTarget.querySelector('select').value;
+              if (toStageId) {
+                this.submitTransitionDrop(jobId, toStageId);
+              }
             }
-          }
-        }));
-      });
+          }));
+        }
+
+        if (typeof Alpine !== 'undefined') {
+          // HTMX swap: Alpine already initialized — register and init the new element
+          registerPipelineBoard();
+          document.addEventListener('htmx:afterSettle', function() {
+            const el = document.querySelector('[x-data="pipelineBoard"]');
+            if (el) Alpine.initTree(el);
+          }, { once: true });
+        } else {
+          // Full page load: wait for Alpine to initialize
+          document.addEventListener('alpine:init', registerPipelineBoard);
+        }
+      })();
     </script>
     <div
       x-data="pipelineBoard"
