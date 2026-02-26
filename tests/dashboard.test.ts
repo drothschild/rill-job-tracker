@@ -110,6 +110,9 @@ beforeEach(() => {
   testDb.prepare(
     'INSERT OR IGNORE INTO stages (id, name, display_order) VALUES (?, ?, ?)'
   ).run(5, 'Rejected', 5);
+  testDb.prepare(
+    'INSERT OR IGNORE INTO stages (id, name, display_order) VALUES (?, ?, ?)'
+  ).run(6, 'Research', 0);
 
   // Create settings table with default stale threshold
   testDb.prepare('INSERT INTO settings (key, value) VALUES (?, ?)').run(

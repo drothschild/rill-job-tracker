@@ -118,6 +118,9 @@ beforeEach(() => {
   testDb.prepare(
     'INSERT OR IGNORE INTO stages (id, name, display_order) VALUES (?, ?, ?)'
   ).run(6, 'Rejected', 6);
+  testDb.prepare(
+    'INSERT OR IGNORE INTO stages (id, name, display_order) VALUES (?, ?, ?)'
+  ).run(7, 'Research', 0);
 
   testDb.close();
 });

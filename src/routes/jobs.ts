@@ -163,11 +163,11 @@ router.post('/', (req: Request, res: Response): void => {
 
   const job = createJob(db, createData);
 
-  // Create initial stage transition
+  // Create initial stage transition (use the job's actual initial stage)
   db.prepare(`
     INSERT INTO stage_transitions (job_id, to_stage_id, transitioned_at)
     VALUES (?, ?, datetime('now'))
-  `).run(job.id, 1);
+  `).run(job.id, job.current_stage_id);
 
   // Redirect to job detail
   res.redirect(`/jobs/${job.id}`);

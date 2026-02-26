@@ -6,6 +6,71 @@ import path from 'path';
 describe('Rill Rules - Stage Transitions (AC4.1)', () => {
   const rulePath = path.join(process.cwd(), 'rules/transitions.lv');
 
+  describe('Research stage transitions', () => {
+    it('should allow transition from Research to Applied', () => {
+      const result = evaluateRule(rulePath, {
+        from_stage: 'Research',
+        to_stage: 'Applied'
+      });
+      expect(result.success).toBe(true);
+      expect(result.value).toEqual({ tag: 'Ok', value: 'allowed' });
+    });
+
+    it('should allow transition from Research to Rejected', () => {
+      const result = evaluateRule(rulePath, {
+        from_stage: 'Research',
+        to_stage: 'Rejected'
+      });
+      expect(result.success).toBe(true);
+      expect(result.value).toEqual({ tag: 'Ok', value: 'allowed' });
+    });
+
+    it('should allow transition from Applied to Research', () => {
+      const result = evaluateRule(rulePath, {
+        from_stage: 'Applied',
+        to_stage: 'Research'
+      });
+      expect(result.success).toBe(true);
+      expect(result.value).toEqual({ tag: 'Ok', value: 'allowed' });
+    });
+
+    it('should allow transition from Phone Screen to Research', () => {
+      const result = evaluateRule(rulePath, {
+        from_stage: 'Phone Screen',
+        to_stage: 'Research'
+      });
+      expect(result.success).toBe(true);
+      expect(result.value).toEqual({ tag: 'Ok', value: 'allowed' });
+    });
+
+    it('should allow transition from Interview to Research', () => {
+      const result = evaluateRule(rulePath, {
+        from_stage: 'Interview',
+        to_stage: 'Research'
+      });
+      expect(result.success).toBe(true);
+      expect(result.value).toEqual({ tag: 'Ok', value: 'allowed' });
+    });
+
+    it('should allow transition from Offer to Research', () => {
+      const result = evaluateRule(rulePath, {
+        from_stage: 'Offer',
+        to_stage: 'Research'
+      });
+      expect(result.success).toBe(true);
+      expect(result.value).toEqual({ tag: 'Ok', value: 'allowed' });
+    });
+
+    it('should allow transition from Rejected to Research', () => {
+      const result = evaluateRule(rulePath, {
+        from_stage: 'Rejected',
+        to_stage: 'Research'
+      });
+      expect(result.success).toBe(true);
+      expect(result.value).toEqual({ tag: 'Ok', value: 'allowed' });
+    });
+  });
+
   describe('Valid transitions', () => {
     it('should allow transition from Applied to Phone Screen', () => {
       const result = evaluateRule(rulePath, {

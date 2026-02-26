@@ -89,6 +89,11 @@ export function createJob(
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
+  const firstStage = db
+    .prepare('SELECT id FROM stages ORDER BY display_order ASC LIMIT 1')
+    .get() as { id: number } | undefined;
+  const initialStageId = firstStage?.id ?? 1;
+
   const info = stmt.run(
     data.company_name,
     data.role,
@@ -99,7 +104,7 @@ export function createJob(
     data.job_description || null,
     data.location || null,
     data.follow_up_date || null,
-    1 // Default to first stage (usually "Applied")
+    initialStageId
   );
 
   const job = getJobById(db, info.lastInsertRowid as number);
