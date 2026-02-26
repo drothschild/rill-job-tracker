@@ -110,6 +110,9 @@ beforeEach(() => {
   testDb.prepare(
     'INSERT OR IGNORE INTO stages (id, name, display_order) VALUES (?, ?, ?)'
   ).run(5, 'Rejected', 5);
+  testDb.prepare(
+    'INSERT OR IGNORE INTO stages (id, name, display_order) VALUES (?, ?, ?)'
+  ).run(6, 'Research', 0);
 
   testDb.close();
 });
@@ -194,11 +197,14 @@ describe('Pipeline Stage Transitions (AC1.7-AC1.12)', () => {
       const jobId = jobIdMatch ? parseInt(jobIdMatch[1], 10) : null;
       expect(jobId).toBeTruthy();
 
-      // Verify job is at Applied stage
+      // Verify job is at Research stage (initial stage)
       let job = db
         .prepare('SELECT * FROM jobs WHERE id = ?')
         .get(jobId) as any;
-      expect(job.current_stage_id).toBe(1); // Applied
+      expect(job.current_stage_id).toBe(6); // Research
+
+      // Move to Applied first
+      db.prepare('UPDATE jobs SET current_stage_id = 1 WHERE id = ?').run(jobId);
 
       // Transition to Phone Screen (stage 2)
       const transitionRes = await agent
@@ -320,6 +326,9 @@ describe('Pipeline Stage Transitions (AC1.7-AC1.12)', () => {
       const jobIdMatch = createRes.headers.location.match(/\/jobs\/(\d+)/);
       const jobId = parseInt(jobIdMatch![1], 10);
 
+      // Move to Applied first (jobs now start at Research)
+      db.prepare('UPDATE jobs SET current_stage_id = 1 WHERE id = ?').run(jobId);
+
       // Transition with sub_label
       const transitionRes = await agent
         .post('/pipeline/transition')
@@ -358,6 +367,9 @@ describe('Pipeline Stage Transitions (AC1.7-AC1.12)', () => {
 
       const jobIdMatch = createRes.headers.location.match(/\/jobs\/(\d+)/);
       const jobId = parseInt(jobIdMatch![1], 10);
+
+      // Move to Applied first (jobs now start at Research)
+      db.prepare('UPDATE jobs SET current_stage_id = 1 WHERE id = ?').run(jobId);
 
       // Transition without sub_label
       const transitionRes = await agent
@@ -398,6 +410,9 @@ describe('Pipeline Stage Transitions (AC1.7-AC1.12)', () => {
 
       const jobIdMatch = createRes.headers.location.match(/\/jobs\/(\d+)/);
       const jobId = parseInt(jobIdMatch![1], 10);
+
+      // Move to Applied first (jobs now start at Research)
+      db.prepare('UPDATE jobs SET current_stage_id = 1 WHERE id = ?').run(jobId);
 
       // Transition Applied -> Phone Screen
       await agent
@@ -448,7 +463,15 @@ describe('Pipeline Stage Transitions (AC1.7-AC1.12)', () => {
       const jobIdMatch = createRes.headers.location.match(/\/jobs\/(\d+)/);
       const jobId = parseInt(jobIdMatch![1], 10);
 
-      // First transition: Applied -> Phone Screen
+      // First transition: Research -> Applied
+      await agent
+        .post('/pipeline/transition')
+        .send({
+          job_id: jobId,
+          to_stage_id: 1,
+        });
+
+      // Second transition: Applied -> Phone Screen
       await agent
         .post('/pipeline/transition')
         .send({
@@ -456,7 +479,7 @@ describe('Pipeline Stage Transitions (AC1.7-AC1.12)', () => {
           to_stage_id: 2,
         });
 
-      // Second transition: Phone Screen -> Interview
+      // Third transition: Phone Screen -> Interview
       await agent
         .post('/pipeline/transition')
         .send({
@@ -464,31 +487,23 @@ describe('Pipeline Stage Transitions (AC1.7-AC1.12)', () => {
           to_stage_id: 3,
         });
 
-      // Third transition: Interview -> Offer
-      await agent
-        .post('/pipeline/transition')
-        .send({
-          job_id: jobId,
-          to_stage_id: 4,
-        });
-
       // Verify all transitions were recorded
-      // Note: job creation adds an initial transition to Applied (stage 1)
+      // Note: job creation adds an initial transition to Research (stage 6)
       // so we expect 4 transitions total: initial + 3 manual transitions
       const transitions = db
         .prepare('SELECT * FROM stage_transitions WHERE job_id = ? ORDER BY id ASC')
         .all(jobId) as any[];
 
       expect(transitions.length).toBe(4);
-      // First is the initial transition (no from_stage)
-      expect(transitions[0].to_stage_id).toBe(1);
+      // First is the initial transition to Research (no from_stage)
+      expect(transitions[0].to_stage_id).toBe(6);
       // Then the manual transitions
-      expect(transitions[1].from_stage_id).toBe(1);
-      expect(transitions[1].to_stage_id).toBe(2);
-      expect(transitions[2].from_stage_id).toBe(2);
-      expect(transitions[2].to_stage_id).toBe(3);
-      expect(transitions[3].from_stage_id).toBe(3);
-      expect(transitions[3].to_stage_id).toBe(4);
+      expect(transitions[1].from_stage_id).toBe(6);
+      expect(transitions[1].to_stage_id).toBe(1);
+      expect(transitions[2].from_stage_id).toBe(1);
+      expect(transitions[2].to_stage_id).toBe(2);
+      expect(transitions[3].from_stage_id).toBe(2);
+      expect(transitions[3].to_stage_id).toBe(3);
     });
   });
 
@@ -511,6 +526,9 @@ describe('Pipeline Stage Transitions (AC1.7-AC1.12)', () => {
 
       const jobIdMatch = createRes.headers.location.match(/\/jobs\/(\d+)/);
       const jobId = parseInt(jobIdMatch![1], 10);
+
+      // Move to Applied first (jobs now start at Research)
+      db.prepare('UPDATE jobs SET current_stage_id = 1 WHERE id = ?').run(jobId);
 
       // Try invalid transition: Applied -> Offer
       const transitionRes = await agent
@@ -548,6 +566,9 @@ describe('Pipeline Stage Transitions (AC1.7-AC1.12)', () => {
 
       const jobIdMatch = createRes.headers.location.match(/\/jobs\/(\d+)/);
       const jobId = parseInt(jobIdMatch![1], 10);
+
+      // Move to Applied first (jobs now start at Research)
+      db.prepare('UPDATE jobs SET current_stage_id = 1 WHERE id = ?').run(jobId);
 
       // Try invalid transition: Applied -> Interview (skip Phone Screen)
       const transitionRes = await agent
@@ -601,13 +622,11 @@ describe('Pipeline Stage Transitions (AC1.7-AC1.12)', () => {
         const jobIdMatch = createRes.headers.location.match(/\/jobs\/(\d+)/);
         const jobId = parseInt(jobIdMatch![1], 10);
 
-        // Move to from_stage
-        if (transition.from !== 1) {
-          db.prepare('UPDATE jobs SET current_stage_id = ? WHERE id = ?').run(
-            transition.from,
-            jobId
-          );
-        }
+        // Move to from_stage (jobs now start at Research, so always set explicitly)
+        db.prepare('UPDATE jobs SET current_stage_id = ? WHERE id = ?').run(
+          transition.from,
+          jobId
+        );
 
         // Perform transition
         const transitionRes = await agent
@@ -675,6 +694,147 @@ describe('Pipeline Stage Transitions (AC1.7-AC1.12)', () => {
       const res = await agent.get('/pipeline');
       expect(res.status).toBe(200);
       expect(res.text).toContain('Display Corp');
+    });
+
+    it('should render the Research stage on the pipeline board', async () => {
+      const app = createApp();
+      const agent = await setupAuthenticatedSession(app);
+
+      const res = await agent.get('/pipeline');
+      expect(res.status).toBe(200);
+      expect(res.text).toContain('Research');
+    });
+  });
+
+  describe('Research stage', () => {
+    it('should create new jobs in the Research stage', async () => {
+      const app = createApp();
+      const agent = await setupAuthenticatedSession(app);
+      const db = getDb();
+
+      const createRes = await agent
+        .post('/jobs')
+        .send({
+          company_name: 'Research Corp',
+          salary_min: '100000',
+          salary_max: '150000',
+          role: 'Engineer',
+          application_type: 'cold',
+        });
+
+      expect(createRes.status).toBe(302);
+      const jobIdMatch = createRes.headers.location.match(/\/jobs\/(\d+)/);
+      const jobId = parseInt(jobIdMatch![1], 10);
+
+      const job = db.prepare('SELECT * FROM jobs WHERE id = ?').get(jobId) as any;
+      expect(job.current_stage_id).toBe(6); // Research
+    });
+
+    it('should allow transition from Research to Applied', async () => {
+      const app = createApp();
+      const agent = await setupAuthenticatedSession(app);
+      const db = getDb();
+
+      const createRes = await agent
+        .post('/jobs')
+        .send({
+          company_name: 'Apply Corp',
+          salary_min: '100000',
+          salary_max: '150000',
+          role: 'Engineer',
+          application_type: 'warm',
+        });
+
+      const jobIdMatch = createRes.headers.location.match(/\/jobs\/(\d+)/);
+      const jobId = parseInt(jobIdMatch![1], 10);
+
+      // Job starts at Research (ID 6), transition to Applied (ID 1)
+      const transitionRes = await agent
+        .post('/pipeline/transition')
+        .send({
+          job_id: jobId,
+          to_stage_id: 1,
+        });
+
+      expect(transitionRes.status).toBe(200);
+      const job = db.prepare('SELECT * FROM jobs WHERE id = ?').get(jobId) as any;
+      expect(job.current_stage_id).toBe(1); // Applied
+    });
+
+    it('should allow transition from Applied back to Research', async () => {
+      const app = createApp();
+      const agent = await setupAuthenticatedSession(app);
+      const db = getDb();
+
+      const createRes = await agent
+        .post('/jobs')
+        .send({
+          company_name: 'Back To Research Corp',
+          salary_min: '100000',
+          salary_max: '150000',
+          role: 'Engineer',
+          application_type: 'cold',
+        });
+
+      const jobIdMatch = createRes.headers.location.match(/\/jobs\/(\d+)/);
+      const jobId = parseInt(jobIdMatch![1], 10);
+
+      // Move to Applied first
+      db.prepare('UPDATE jobs SET current_stage_id = 1 WHERE id = ?').run(jobId);
+
+      // Transition back to Research (ID 6)
+      const transitionRes = await agent
+        .post('/pipeline/transition')
+        .send({
+          job_id: jobId,
+          to_stage_id: 6,
+        });
+
+      expect(transitionRes.status).toBe(200);
+      const job = db.prepare('SELECT * FROM jobs WHERE id = ?').get(jobId) as any;
+      expect(job.current_stage_id).toBe(6); // Research
+    });
+
+    it('should allow transition from any stage back to Research', async () => {
+      const app = createApp();
+      const agent = await setupAuthenticatedSession(app);
+      const db = getDb();
+
+      const stagesWithResearch = [
+        { id: 1, name: 'Applied' },
+        { id: 2, name: 'Phone Screen' },
+        { id: 3, name: 'Interview' },
+        { id: 4, name: 'Offer' },
+        { id: 5, name: 'Rejected' },
+      ];
+
+      for (const stage of stagesWithResearch) {
+        const createRes = await agent
+          .post('/jobs')
+          .send({
+            company_name: `${stage.name} Corp`,
+            role: 'Engineer',
+            application_type: 'cold',
+            salary_min: '100000',
+            salary_max: '150000',
+          });
+
+        const jobIdMatch = createRes.headers.location.match(/\/jobs\/(\d+)/);
+        const jobId = parseInt(jobIdMatch![1], 10);
+
+        db.prepare('UPDATE jobs SET current_stage_id = ? WHERE id = ?').run(stage.id, jobId);
+
+        const transitionRes = await agent
+          .post('/pipeline/transition')
+          .send({
+            job_id: jobId,
+            to_stage_id: 6, // Research
+          });
+
+        expect(transitionRes.status).toBe(200);
+        const job = db.prepare('SELECT * FROM jobs WHERE id = ?').get(jobId) as any;
+        expect(job.current_stage_id).toBe(6);
+      }
     });
   });
 });

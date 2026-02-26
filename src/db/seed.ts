@@ -1,6 +1,7 @@
 import type Database from 'better-sqlite3';
 
 const PIPELINE_STAGES = [
+  { name: 'Research', display_order: 0 },
   { name: 'Applied', display_order: 1 },
   { name: 'Phone Screen', display_order: 2 },
   { name: 'Interview', display_order: 3 },

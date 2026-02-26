@@ -113,6 +113,9 @@ beforeEach(() => {
   testDb.prepare(
     'INSERT OR IGNORE INTO stages (id, name, display_order) VALUES (?, ?, ?)'
   ).run(6, 'Rejected', 6);
+  testDb.prepare(
+    'INSERT OR IGNORE INTO stages (id, name, display_order) VALUES (?, ?, ?)'
+  ).run(7, 'Research', 0);
 
   testDb.close();
 });
@@ -260,6 +263,11 @@ describe('Export (AC5)', () => {
           content: 'Initial phone screen scheduled for Friday',
         });
 
+      // Move job1 to Applied first (jobs now start at Research)
+      const db3 = new Database(testDbPath);
+      db3.prepare('UPDATE jobs SET current_stage_id = 1 WHERE id = ?').run(job1Id);
+      db3.close();
+
       // Add stage transition
       await request(app)
         .post('/pipeline/transition')
@@ -329,7 +337,7 @@ describe('Export (AC5)', () => {
       expect(exportedJob2).toBeDefined();
       expect(exportedJob2.company_name).toBe('Tech Startup');
       expect(exportedJob2.role).toBe('Full Stack Developer');
-      expect(exportedJob2.current_stage).toBe('Applied');
+      expect(exportedJob2.current_stage).toBe('Research');
       expect(exportedJob2.contacts).toHaveLength(1);
       expect(exportedJob2.contacts[0].interactions).toHaveLength(1);
       expect(exportedJob2.contacts[0].interactions[0].type).toBe('call');

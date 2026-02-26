@@ -3,12 +3,19 @@
 -- Returns: Ok("allowed") or Err("Invalid transition from X to Y")
 
 match (from_stage, to_stage) {
+  ("Research", "Applied") -> Ok("allowed"),
+  ("Research", "Rejected") -> Ok("allowed"),
   ("Applied", "Phone Screen") -> Ok("allowed"),
   ("Applied", "Rejected") -> Ok("allowed"),
+  ("Applied", "Research") -> Ok("allowed"),
   ("Phone Screen", "Interview") -> Ok("allowed"),
   ("Phone Screen", "Rejected") -> Ok("allowed"),
+  ("Phone Screen", "Research") -> Ok("allowed"),
   ("Interview", "Offer") -> Ok("allowed"),
   ("Interview", "Rejected") -> Ok("allowed"),
+  ("Interview", "Research") -> Ok("allowed"),
   ("Offer", "Rejected") -> Ok("allowed"),
+  ("Offer", "Research") -> Ok("allowed"),
+  ("Rejected", "Research") -> Ok("allowed"),
   _ -> Err("Invalid transition from " ++ from_stage ++ " to " ++ to_stage)
 }
