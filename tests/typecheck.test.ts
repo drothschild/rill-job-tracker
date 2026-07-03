@@ -42,5 +42,23 @@ describe('typecheck', () => {
       const result = typecheckRule(path.join(RULES_DIR, 'validation.lv'), signature);
       expect(result.ok).toBe(true);
     });
+
+    it('AC2.1: broken validation.lv with undeclared field read returns ok:false and located error', () => {
+      const signature = {
+        job: T.record({
+          company_name: T.String,
+          role: T.String,
+          salary_min: T.Int,
+          salary_max: T.Int,
+        }), // closed
+      };
+      const brokenFixturePath = path.join(__dirname, 'fixtures', 'broken-validation.lv');
+      const result = typecheckRule(brokenFixturePath, signature);
+
+      expect(result.ok).toBe(false);
+      expect(result.errors.length).toBeGreaterThanOrEqual(1);
+      expect(result.errors[0]).toContain('compnay_name');
+      expect(result.errors[0]).toMatch(/line \d+, col \d+/);
+    });
   });
 });
