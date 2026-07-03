@@ -15,6 +15,7 @@ import dashboardRoutes from './routes/dashboard';
 import settingsRoutes from './routes/settings';
 import exportRoutes from './routes/export';
 import { startAlertScheduler } from './alerts/scheduler';
+import { checkAllRules } from './rill/typecheck';
 
 export function createApp(): express.Application {
   const app = express();
@@ -86,6 +87,13 @@ if (require.main === module) {
   const app = createApp();
   const db = getDb();
   const PORT = parseInt(process.env.PORT || '3000', 10);
+
+  const ruleCheck = checkAllRules();
+  if (!ruleCheck.ok) {
+    console.error('Rule type-check failed; refusing to start:');
+    for (const err of ruleCheck.errors) console.error(`  ${err}`);
+    process.exit(1);
+  }
 
   const server = app.listen(PORT, () => {
     console.log(`Job tracker running on http://localhost:${PORT}`);
