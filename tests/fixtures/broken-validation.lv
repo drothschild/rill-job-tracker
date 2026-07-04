@@ -2,7 +2,7 @@
 -- Injected: job (Record with company_name, role, salary_min, salary_max)
 -- Returns: Ok("valid") or Err("reason")
 
-let has_company = str_len(job.company_name) > 0 in
+let has_company = str_len(job.compnay_name) > 0 in
 let has_role = str_len(job.role) > 0 in
 -- Salary validation: if both are positive integers, then min must be <= max
 let salary_valid = match (job.salary_min, job.salary_max) {
