@@ -1,0 +1,2 @@
+rule headed_broken(name: String) -> Int
+name + 1
