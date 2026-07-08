@@ -20,6 +20,7 @@ import { escapeHtml } from '../views/helpers';
 import { jobListView } from '../views/jobs/list';
 import { jobFormView } from '../views/jobs/form';
 import { jobDetailView } from '../views/jobs/detail';
+import { fetchJobDescription } from '../utils/fetchJobDescription';
 
 const router = Router();
 
@@ -239,6 +240,57 @@ router.put('/:id', (req: Request, res: Response): void => {
 
   const html = jobDetailView(updatedJob, contacts, notes, stageHistory);
   const page = layout(updatedJob.company_name, html, req);
+  res.send(page);
+});
+
+/**
+ * POST /jobs/:id/fetch-description - Fetch job description text from the job's link
+ */
+router.post('/:id/fetch-description', async (req: Request, res: Response): Promise<void> => {
+  const db = getDb();
+  const idParam = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const jobId = parseInt(idParam, 10);
+
+  const job = getJobById(db, jobId);
+  if (!job) {
+    res.status(404).send('Job not found');
+    return;
+  }
+
+  if (!job.link) {
+    res.status(400).send('This job has no link to fetch a description from.');
+    return;
+  }
+
+  let errorHtml = '';
+  let currentJob = job;
+
+  try {
+    const description = await fetchJobDescription(job.link);
+    currentJob = updateJob(db, jobId, { job_description: description });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    errorHtml = `
+      <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+        <p class="text-red-800 font-medium">${escapeHtml(message)}</p>
+      </div>
+    `;
+  }
+
+  const contacts = getContactsByJobId(db, jobId);
+  const notes = getNotesByJobId(db, jobId);
+  const stageHistory = db
+    .prepare(`
+      SELECT st.*, s.name as to_stage_name
+      FROM stage_transitions st
+      LEFT JOIN stages s ON st.to_stage_id = s.id
+      WHERE st.job_id = ?
+      ORDER BY st.transitioned_at DESC
+    `)
+    .all(jobId) as any[];
+
+  const html = errorHtml + jobDetailView(currentJob, contacts, notes, stageHistory);
+  const page = layout(currentJob.company_name, html, req);
   res.send(page);
 });
 

@@ -149,6 +149,24 @@ export function jobDetailView(
                 <a href="${escapeHtml(job.link)}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 font-medium mt-1 block break-all text-xs sm:text-sm">
                   ${escapeHtml(job.link)}
                 </a>
+                <div class="flex flex-wrap gap-2 mt-2">
+                  <a
+                    href="${escapeHtml(job.link)}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="px-3 py-1.5 bg-gray-100 text-gray-800 rounded text-xs sm:text-sm font-medium hover:bg-gray-200"
+                  >
+                    View Listing ↗
+                  </a>
+                  <button
+                    hx-post="/jobs/${job.id}/fetch-description"
+                    hx-target="main"
+                    hx-confirm="Fetch the job description from this URL? This will overwrite the current description."
+                    class="px-3 py-1.5 bg-gray-100 text-gray-800 rounded text-xs sm:text-sm font-medium hover:bg-gray-200"
+                  >
+                    Fetch Description from URL
+                  </button>
+                </div>
               </div>
             ` : ''}
             ${job.follow_up_date ? `
