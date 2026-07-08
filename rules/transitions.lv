@@ -1,6 +1,5 @@
 -- Stage transition validation
--- Injected: from_stage (String), to_stage (String)
--- Returns: Ok("allowed") or Err("Invalid transition from X to Y")
+rule transitions(from_stage: String, to_stage: String) -> Result(String)
 
 let allowed = [
   ("Research",     ["Applied", "Rejected"]),

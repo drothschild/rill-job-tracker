@@ -1,6 +1,6 @@
 # Rill integration
 
-Last verified: 2026-07-02
+Last verified: 2026-07-07
 
 ## Purpose
 Runs the `.lv` rules in `rules/` through the embedded Rill language. Rules are
@@ -9,35 +9,45 @@ request happens to hit it — this dir adds a load-time safety net.
 
 ## Contracts
 - **Boot-time type-check is a hard gate.** `checkAllRules()` type-checks every
-  shipped rule against its declared signature. `server.ts` calls it in the
-  `require.main` block BEFORE `app.listen`; on failure it logs the errors and
-  `process.exit(1)`. The server must never start serving with rules that don't
-  type-check.
-- **`RULE_SIGNATURES` in `typecheck.ts` is the source of truth for rule inputs.**
-  Each entry declares the shape of the record/values injected into that rule.
-  These signatures MUST match what `bridge.ts` actually injects at request time —
-  they are a hand-maintained mirror, not derived. Update both together.
-- **Exposes**: `typecheckRule(rulePath, signature)` and `checkAllRules()`, both
-  returning `{ ok, errors }` (never throw). Error messages are source-located
-  (`Error at line X, col Y: ...`), prefixed by filename in `checkAllRules`.
+  `.lv` file in `rules/` against its own in-file `rule` header. `server.ts`
+  calls it in the `require.main` block BEFORE `app.listen`; on failure it logs
+  the errors and `process.exit(1)`. The server must never start serving with
+  rules that don't type-check.
+- **Each rule declares its own signature in-file.** The `rule name(params) -> Type`
+  header at the top of each `.lv` file is the single source of truth for that
+  rule's inputs and output. `checkAllRules()` globs the directory — a new rule
+  file is covered the moment it exists, and a headerless file FAILS the boot
+  gate (no silent coverage gaps). There is no external signature registry.
+- **`bridge.ts` validates injection against the header.** Before evaluating, it
+  checks that every declared param is present in the injected `data` and fails
+  with the missing param's name. Route code must inject exactly what the header
+  declares.
+- **Exposes**: `checkAllRules(rulesDir?)` and `typecheckRule(rulePath, signature)`
+  (explicit-signature variant for ad-hoc checks), both returning `{ ok, errors }`
+  (never throw). Error messages are source-located, prefixed by filename in
+  `checkAllRules`.
 
 ## Invariants
 - Rule string-length checks use `str_len` (String -> Int), not `length`
-  (List -> Int). `length(job.company_name)` fails the type-check; see
-  `rules/validation.lv`.
-- Record signatures are closed unless the rule reads fields beyond the declared
-  set — those pass an open row (`T.record(fields, true)`).
+  (List -> Int).
+- Record types in headers are closed unless they end with `..` (open row) —
+  open only when the injected record legitimately carries extra fields the
+  rule doesn't read.
 
 ## Dependencies
-- **Uses**: `rill-lang` public API (`infer`, `createPreludeTypeEnv`, `bindType`,
-  `T`, `Type`).
-- **Boundary**: `bridge.ts` (the request hot path) is deliberately NOT
-  type-checked per-request; the boot-time check is the guarantee instead.
+- **Uses**: `rill-lang` public API (`checkRuleSource`, `parseProgram`, `lex`,
+  `evaluate`, `createPrelude`, `infer`, `createPreludeTypeEnv`, `bindType`, `T`, `Type`).
+- **Boundary**: `bridge.ts` (the request hot path) does a cheap missing-param
+  check per evaluation; full type-checking happens once at boot.
 
 ## Key Files
-- `typecheck.ts` - `typecheckRule`, `checkAllRules`, `RULE_SIGNATURES`
-- `bridge.ts` - request-time rule execution (unchanged by the type-check work)
+- `typecheck.ts` - `checkAllRules` (header-driven, globs rules/), `typecheckRule`
+- `bridge.ts` - request-time rule execution + injection-boundary param check
 
 ## Gotchas
-- Adding/renaming a rule file or changing its injected inputs requires updating
-  `RULE_SIGNATURES`, or boot silently stops covering it (or wrongly fails).
+- Changing a rule's injected inputs means updating its in-file header AND the
+  route code that builds `data` — the boot gate catches header/body mismatches,
+  and the bridge catches missing injections at request time, but it cannot know
+  a route passes extra junk keys (extras are ignored).
+- `evaluateSource` (string variant) accepts headerless sources for tests/REPL
+  use; only files shipped in `rules/` must carry headers.

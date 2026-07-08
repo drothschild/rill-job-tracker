@@ -1,6 +1,8 @@
 -- Alert condition evaluation (simplified)
--- Injected: job (Record), alert_threshold (Int)
--- Returns: Record { follow_up_due: Bool, no_response: Bool, is_active: Bool }
+rule alerts(
+  job: { current_stage: String, follow_up_date_passed: Bool, days_since_update: Int, .. },
+  alert_threshold: Int
+) -> { is_active: Bool, follow_up_due: Bool, no_response: Bool }
 
 let is_active = !one_of(job.current_stage, ["Rejected", "Offer"])
 {

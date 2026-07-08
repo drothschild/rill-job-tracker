@@ -1,5 +1,5 @@
 import { readFileSync } from 'fs';
-import { lex, parse, evaluate, createPrelude, Value } from 'rill-lang';
+import { lex, parseProgram, evaluate, createPrelude, Value } from 'rill-lang';
 
 // JS → Rill conversion
 export function jsToRill(value: unknown): Value {
@@ -95,8 +95,22 @@ export function evaluateSource(
       env.set(key, jsToRill(val));
     }
     const tokens = lex(source);
-    const ast = parse(tokens);
-    const result = evaluate(ast, env);
+    const program = parseProgram(tokens);
+    // A rule header names the exact inputs the host must inject — fail the
+    // injection boundary with the parameter's name instead of mid-evaluation.
+    if (program.header) {
+      const missing = program.header.params
+        .map((p) => p.name)
+        .filter((name) => !(name in data));
+      if (missing.length > 0) {
+        return {
+          success: false,
+          value: null,
+          error: `rule '${program.header.name}' is missing injected input(s): ${missing.join(', ')}`,
+        };
+      }
+    }
+    const result = evaluate(program.body, env);
     return { success: true, value: rillToJs(result) };
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);

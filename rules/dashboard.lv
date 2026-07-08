@@ -1,6 +1,7 @@
 -- Dashboard metrics computation
--- Injected: jobs (List of Records with current_stage, application_type)
--- Returns: Record { total, responded, interviewed, warm_count, cold_count }
+rule dashboard(
+  jobs: List({ current_stage: String, application_type: String, .. })
+) -> { total: Int, responded: Int, interviewed: Int, warm_count: Int, cold_count: Int }
 
 let total = length(jobs)
 let responded = jobs |> count(fn(j) -> j.current_stage != "Applied")

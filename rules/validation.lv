@@ -1,6 +1,7 @@
--- Job input validation
--- Injected: job (Record with company_name, role, salary_min, salary_max)
--- Returns: Ok("valid") or Err("reason") — first failing check wins
+-- Job input validation: first failing check wins
+rule validation(
+  job: { company_name: String, role: String, salary_min: Int, salary_max: Int }
+) -> Result(String)
 
 let _ = require(str_len(job.company_name) > 0, "Company name is required")?
 let _ = require(str_len(job.role) > 0, "Role is required")?
