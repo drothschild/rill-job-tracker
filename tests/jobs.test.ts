@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import request from 'supertest';
 import Database from 'better-sqlite3';
 import path from 'path';
@@ -671,6 +671,100 @@ describe('Job CRUD Operations (AC1)', () => {
 
       expect(job.salary_min).toBe(100000); // Original value
       expect(job.salary_max).toBe(150000); // Original value
+    });
+  });
+
+  describe('AC1.7: Job description can be fetched from the job URL', () => {
+    const originalFetch = global.fetch;
+
+    afterEach(() => {
+      global.fetch = originalFetch;
+      vi.restoreAllMocks();
+    });
+
+    it('should fetch and save the description text from the job link', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        text: async () => '<html><body><p>We need a great engineer.</p></body></html>',
+      }) as any;
+
+      const app = createApp();
+      const agent = await setupAuthenticatedSession(app);
+
+      const createRes = await agent
+        .post('/jobs')
+        .send({
+          company_name: 'Fetch Corp',
+          role: 'Engineer',
+          link: 'https://fetchcorp.example.com/jobs/1',
+          application_type: 'cold',
+        });
+
+      const jobIdMatch = createRes.headers.location.match(/\/jobs\/(\d+)/);
+      const jobId = jobIdMatch![1];
+
+      const fetchRes = await agent.post(`/jobs/${jobId}/fetch-description`);
+
+      expect(fetchRes.status).toBe(200);
+      expect(fetchRes.text).toContain('We need a great engineer.');
+      expect(global.fetch).toHaveBeenCalledWith(
+        'https://fetchcorp.example.com/jobs/1',
+        expect.objectContaining({ headers: expect.any(Object) })
+      );
+
+      const db = getDb();
+      const job = db.prepare('SELECT * FROM jobs WHERE id = ?').get(parseInt(jobId)) as any;
+      expect(job.job_description).toBe('We need a great engineer.');
+    });
+
+    it('should return 400 when the job has no link', async () => {
+      const app = createApp();
+      const agent = await setupAuthenticatedSession(app);
+
+      const createRes = await agent
+        .post('/jobs')
+        .send({
+          company_name: 'No Link Corp',
+          role: 'Engineer',
+          application_type: 'cold',
+        });
+
+      const jobIdMatch = createRes.headers.location.match(/\/jobs\/(\d+)/);
+      const jobId = jobIdMatch![1];
+
+      const fetchRes = await agent.post(`/jobs/${jobId}/fetch-description`);
+
+      expect(fetchRes.status).toBe(400);
+    });
+
+    it('should show an error and leave the description unchanged when the fetch fails', async () => {
+      global.fetch = vi.fn().mockRejectedValue(new Error('network down')) as any;
+
+      const app = createApp();
+      const agent = await setupAuthenticatedSession(app);
+
+      const createRes = await agent
+        .post('/jobs')
+        .send({
+          company_name: 'Broken Link Corp',
+          role: 'Engineer',
+          link: 'https://brokenlink.example.com/jobs/1',
+          job_description: 'Original description',
+          application_type: 'cold',
+        });
+
+      const jobIdMatch = createRes.headers.location.match(/\/jobs\/(\d+)/);
+      const jobId = jobIdMatch![1];
+
+      const fetchRes = await agent.post(`/jobs/${jobId}/fetch-description`);
+
+      expect(fetchRes.status).toBe(200);
+      expect(fetchRes.text).toContain('network down');
+
+      const db = getDb();
+      const job = db.prepare('SELECT * FROM jobs WHERE id = ?').get(parseInt(jobId)) as any;
+      expect(job.job_description).toBe('Original description');
     });
   });
 });
