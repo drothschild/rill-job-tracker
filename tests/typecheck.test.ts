@@ -62,3 +62,34 @@ describe('typecheck', () => {
     });
   });
 });
+
+describe('rule headers (in-file signatures)', () => {
+  const FIXTURES_DIR = path.join(__dirname, 'fixtures');
+
+  it('checkAllRules covers every .lv file in the directory without registration', () => {
+    const result = checkAllRules(FIXTURES_DIR);
+    expect(result.ok).toBe(false);
+    // headed-good.lv passes; the other two produce errors prefixed by filename
+    expect(result.errors.some(e => e.startsWith('headed-broken.lv:'))).toBe(true);
+    expect(result.errors.some(e => e.startsWith('headerless.lv:'))).toBe(true);
+    expect(result.errors.some(e => e.startsWith('headed-good.lv:'))).toBe(false);
+  });
+
+  it('a headerless rule file is an error, not silently skipped', () => {
+    const result = checkAllRules(FIXTURES_DIR);
+    const err = result.errors.find(e => e.startsWith('headerless.lv:'));
+    expect(err).toMatch(/header/i);
+  });
+
+  it('a body/return-type mismatch is reported with the rule name', () => {
+    const result = checkAllRules(FIXTURES_DIR);
+    const err = result.errors.find(e => e.startsWith('headed-broken.lv:'));
+    expect(err).toBeDefined();
+  });
+
+  it('all shipped rules carry headers and pass without RULE_SIGNATURES', () => {
+    const result = checkAllRules();
+    expect(result.ok).toBe(true);
+    expect(result.errors).toEqual([]);
+  });
+});

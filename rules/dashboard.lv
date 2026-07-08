@@ -1,23 +1,11 @@
 -- Dashboard metrics computation
--- Injected: jobs (List of Records with current_stage, application_type)
--- Returns: Record { total, responded, interviewed, warm_count, cold_count }
+rule dashboard(
+  jobs: List({ current_stage: String, application_type: String, .. })
+) -> { total: Int, responded: Int, interviewed: Int, warm_count: Int, cold_count: Int }
 
-let total = length(jobs) in
-let responded = length(filter(fn(j) -> match j.current_stage {
-  "Applied" -> false,
-  _ -> true
-}, jobs)) in
-let interviewed = length(filter(fn(j) -> match j.current_stage {
-  "Interview" -> true,
-  "Offer" -> true,
-  _ -> false
-}, jobs)) in
-let warm_count = length(filter(fn(j) -> j.application_type == "warm", jobs)) in
-let cold_count = length(filter(fn(j) -> j.application_type == "cold", jobs)) in
-{
-  total: total,
-  responded: responded,
-  interviewed: interviewed,
-  warm_count: warm_count,
-  cold_count: cold_count
-}
+let total = length(jobs)
+let responded = jobs |> count(fn(j) -> j.current_stage != "Applied")
+let interviewed = jobs |> count(fn(j) -> one_of(j.current_stage, ["Interview", "Offer"]))
+let warm_count = jobs |> count(fn(j) -> j.application_type == "warm")
+let cold_count = jobs |> count(fn(j) -> j.application_type == "cold")
+{ total, responded, interviewed, warm_count, cold_count }

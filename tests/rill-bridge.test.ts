@@ -361,3 +361,17 @@ describe('Rill Bridge - Complex rule scenarios', () => {
     });
   });
 });
+
+describe('rule headers at evaluation time', () => {
+  it('evaluates a rule file that carries a header', () => {
+    const result = evaluateRule(path.join(__dirname, 'fixtures', 'headed-good.lv'), { x: 2, y: 3 });
+    expect(result.success).toBe(true);
+    expect(result.value).toBe(5);
+  });
+
+  it('reports a missing declared input by name instead of failing mid-evaluation', () => {
+    const result = evaluateRule(path.join(__dirname, 'fixtures', 'headed-good.lv'), { x: 2 });
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/y/);
+  });
+});
