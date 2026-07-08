@@ -1,19 +1,10 @@
 -- Job input validation
 -- Injected: job (Record with company_name, role, salary_min, salary_max)
--- Returns: Ok("valid") or Err("reason")
+-- Returns: Ok("valid") or Err("reason") — first failing check wins
 
-let has_company = str_len(job.company_name) > 0 in
-let has_role = str_len(job.role) > 0 in
--- Salary validation: if both are positive integers, then min must be <= max
-let salary_valid = match (job.salary_min, job.salary_max) {
-  (0, 0) -> true,
-  (0, _) -> true,
-  (_, 0) -> true,
-  (min, max) -> min <= max
-} in
-match (has_company, has_role, salary_valid) {
-  (false, _, _) -> Err("Company name is required"),
-  (_, false, _) -> Err("Role is required"),
-  (_, _, false) -> Err("Minimum salary cannot exceed maximum salary"),
-  _ -> Ok("valid")
-}
+let _ = require(str_len(job.company_name) > 0, "Company name is required")?
+let _ = require(str_len(job.role) > 0, "Role is required")?
+-- Salary check only applies when both bounds are set (non-zero)
+let _ = require(job.salary_min == 0 || job.salary_max == 0 || job.salary_min <= job.salary_max,
+                "Minimum salary cannot exceed maximum salary")?
+Ok("valid")

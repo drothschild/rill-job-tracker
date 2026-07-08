@@ -2,19 +2,9 @@
 -- Injected: job (Record), alert_threshold (Int)
 -- Returns: Record { follow_up_due: Bool, no_response: Bool, is_active: Bool }
 
-let is_active = match job.current_stage {
-  "Rejected" -> false,
-  "Offer" -> false,
-  _ -> true
-} in
+let is_active = !one_of(job.current_stage, ["Rejected", "Offer"])
 {
-  is_active: is_active,
-  follow_up_due: match (is_active, job.follow_up_date_passed) {
-    (true, true) -> true,
-    _ -> false
-  },
-  no_response: match (is_active, job.days_since_update > alert_threshold) {
-    (true, true) -> true,
-    _ -> false
-  }
+  is_active,
+  follow_up_due: is_active && job.follow_up_date_passed,
+  no_response: is_active && job.days_since_update > alert_threshold
 }
