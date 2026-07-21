@@ -885,3 +885,80 @@ describe('Rill Rules - Integration (All ACs)', () => {
     expect(dashResult.success).toBe(true);
   });
 });
+
+describe('Rill Rules - Tech Screen stage', () => {
+  const rulePath = path.join(process.cwd(), 'rules/transitions.lv');
+
+  it('maps the Tech Screen display string to the TechScreen constructor', () => {
+    expect(stageToTag('Tech Screen')).toEqual({ tag: 'TechScreen' });
+  });
+
+  it('should allow transition from Phone Screen to Tech Screen', () => {
+    const result = evaluateRule(rulePath, {
+      from_stage: stageToTag('Phone Screen'),
+      to_stage: stageToTag('Tech Screen')
+    });
+    expect(result.success).toBe(true);
+    expect(result.value).toEqual({ tag: 'Ok', value: 'allowed' });
+  });
+
+  it('should allow transition from Tech Screen to Interview', () => {
+    const result = evaluateRule(rulePath, {
+      from_stage: stageToTag('Tech Screen'),
+      to_stage: stageToTag('Interview')
+    });
+    expect(result.success).toBe(true);
+    expect(result.value).toEqual({ tag: 'Ok', value: 'allowed' });
+  });
+
+  it('should allow transition from Tech Screen to Rejected', () => {
+    const result = evaluateRule(rulePath, {
+      from_stage: stageToTag('Tech Screen'),
+      to_stage: stageToTag('Rejected')
+    });
+    expect(result.success).toBe(true);
+    expect(result.value).toEqual({ tag: 'Ok', value: 'allowed' });
+  });
+
+  it('should allow transition from Tech Screen back to Research', () => {
+    const result = evaluateRule(rulePath, {
+      from_stage: stageToTag('Tech Screen'),
+      to_stage: stageToTag('Research')
+    });
+    expect(result.success).toBe(true);
+    expect(result.value).toEqual({ tag: 'Ok', value: 'allowed' });
+  });
+
+  it('should allow transition from Tech Screen back to Phone Screen', () => {
+    const result = evaluateRule(rulePath, {
+      from_stage: stageToTag('Tech Screen'),
+      to_stage: stageToTag('Phone Screen')
+    });
+    expect(result.success).toBe(true);
+    expect(result.value).toEqual({ tag: 'Ok', value: 'allowed' });
+  });
+
+  it('should reject transition from Tech Screen to Offer (must interview first)', () => {
+    const result = evaluateRule(rulePath, {
+      from_stage: stageToTag('Tech Screen'),
+      to_stage: stageToTag('Offer')
+    });
+    expect(result.success).toBe(true);
+    expect(result.value).toEqual({
+      tag: 'Err',
+      value: 'Invalid transition from Tech Screen to Offer'
+    });
+  });
+
+  it('should reject transition from Research to Tech Screen (must apply first)', () => {
+    const result = evaluateRule(rulePath, {
+      from_stage: stageToTag('Research'),
+      to_stage: stageToTag('Tech Screen')
+    });
+    expect(result.success).toBe(true);
+    expect(result.value).toEqual({
+      tag: 'Err',
+      value: 'Invalid transition from Research to Tech Screen'
+    });
+  });
+});

@@ -1,6 +1,6 @@
 -- Stage transition validation with declared Stage union
 
-type Stage = Research | Applied | PhoneScreen | Interview | Offer | Rejected
+type Stage = Research | Applied | PhoneScreen | TechScreen | Interview | Offer | Rejected
 
 rule transitions(from_stage: Stage, to_stage: Stage) -> Result(String)
   let from_display =
@@ -8,6 +8,7 @@ rule transitions(from_stage: Stage, to_stage: Stage) -> Result(String)
       Research -> "Research",
       Applied -> "Applied",
       PhoneScreen -> "Phone Screen",
+      TechScreen -> "Tech Screen",
       Interview -> "Interview",
       Offer -> "Offer",
       Rejected -> "Rejected"
@@ -17,6 +18,7 @@ rule transitions(from_stage: Stage, to_stage: Stage) -> Result(String)
       Research -> "Research",
       Applied -> "Applied",
       PhoneScreen -> "Phone Screen",
+      TechScreen -> "Tech Screen",
       Interview -> "Interview",
       Offer -> "Offer",
       Rejected -> "Rejected"
@@ -31,7 +33,11 @@ rule transitions(from_stage: Stage, to_stage: Stage) -> Result(String)
       then Ok("allowed")
       else Err("Invalid transition from " ++ from_display ++ " to " ++ to_display),
     PhoneScreen ->
-      if one_of(to_stage, [Interview, Rejected, Research])
+      if one_of(to_stage, [TechScreen, Interview, Rejected, Research])
+      then Ok("allowed")
+      else Err("Invalid transition from " ++ from_display ++ " to " ++ to_display),
+    TechScreen ->
+      if one_of(to_stage, [Interview, PhoneScreen, Rejected, Research])
       then Ok("allowed")
       else Err("Invalid transition from " ++ from_display ++ " to " ++ to_display),
     Interview ->
