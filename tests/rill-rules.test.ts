@@ -929,6 +929,15 @@ describe('Rill Rules - Tech Screen stage', () => {
     expect(result.value).toEqual({ tag: 'Ok', value: 'allowed' });
   });
 
+  it('should allow transition from Tech Screen back to Phone Screen', () => {
+    const result = evaluateRule(rulePath, {
+      from_stage: stageToTag('Tech Screen'),
+      to_stage: stageToTag('Phone Screen')
+    });
+    expect(result.success).toBe(true);
+    expect(result.value).toEqual({ tag: 'Ok', value: 'allowed' });
+  });
+
   it('should reject transition from Tech Screen to Offer (must interview first)', () => {
     const result = evaluateRule(rulePath, {
       from_stage: stageToTag('Tech Screen'),
