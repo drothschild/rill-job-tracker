@@ -281,6 +281,128 @@ describe('Rill Rules - Stage Transitions (AC4.1)', () => {
         value: 'Invalid transition from Rejected to Offer'
       });
     });
+
+    it('should reject transition from Research to Offer', () => {
+      const result = evaluateRule(rulePath, {
+        from_stage: stageToTag('Research'),
+        to_stage: stageToTag('Offer')
+      });
+      expect(result.success).toBe(true);
+      expect(result.value).toEqual({
+        tag: 'Err',
+        value: 'Invalid transition from Research to Offer'
+      });
+    });
+
+    it('should reject transition from Offer to Phone Screen', () => {
+      const result = evaluateRule(rulePath, {
+        from_stage: stageToTag('Offer'),
+        to_stage: stageToTag('Phone Screen')
+      });
+      expect(result.success).toBe(true);
+      expect(result.value).toEqual({
+        tag: 'Err',
+        value: 'Invalid transition from Offer to Phone Screen'
+      });
+    });
+
+    it('should reject transition from Rejected to Phone Screen', () => {
+      const result = evaluateRule(rulePath, {
+        from_stage: stageToTag('Rejected'),
+        to_stage: stageToTag('Phone Screen')
+      });
+      expect(result.success).toBe(true);
+      expect(result.value).toEqual({
+        tag: 'Err',
+        value: 'Invalid transition from Rejected to Phone Screen'
+      });
+    });
+
+    it('should reject transition from Rejected to Interview', () => {
+      const result = evaluateRule(rulePath, {
+        from_stage: stageToTag('Rejected'),
+        to_stage: stageToTag('Interview')
+      });
+      expect(result.success).toBe(true);
+      expect(result.value).toEqual({
+        tag: 'Err',
+        value: 'Invalid transition from Rejected to Interview'
+      });
+    });
+  });
+
+  describe('Self-transitions (should all be rejected)', () => {
+    it('should reject transition from Research to Research', () => {
+      const result = evaluateRule(rulePath, {
+        from_stage: stageToTag('Research'),
+        to_stage: stageToTag('Research')
+      });
+      expect(result.success).toBe(true);
+      expect(result.value).toEqual({
+        tag: 'Err',
+        value: 'Invalid transition from Research to Research'
+      });
+    });
+
+    it('should reject transition from Applied to Applied', () => {
+      const result = evaluateRule(rulePath, {
+        from_stage: stageToTag('Applied'),
+        to_stage: stageToTag('Applied')
+      });
+      expect(result.success).toBe(true);
+      expect(result.value).toEqual({
+        tag: 'Err',
+        value: 'Invalid transition from Applied to Applied'
+      });
+    });
+
+    it('should reject transition from Phone Screen to Phone Screen', () => {
+      const result = evaluateRule(rulePath, {
+        from_stage: stageToTag('Phone Screen'),
+        to_stage: stageToTag('Phone Screen')
+      });
+      expect(result.success).toBe(true);
+      expect(result.value).toEqual({
+        tag: 'Err',
+        value: 'Invalid transition from Phone Screen to Phone Screen'
+      });
+    });
+
+    it('should reject transition from Interview to Interview', () => {
+      const result = evaluateRule(rulePath, {
+        from_stage: stageToTag('Interview'),
+        to_stage: stageToTag('Interview')
+      });
+      expect(result.success).toBe(true);
+      expect(result.value).toEqual({
+        tag: 'Err',
+        value: 'Invalid transition from Interview to Interview'
+      });
+    });
+
+    it('should reject transition from Offer to Offer', () => {
+      const result = evaluateRule(rulePath, {
+        from_stage: stageToTag('Offer'),
+        to_stage: stageToTag('Offer')
+      });
+      expect(result.success).toBe(true);
+      expect(result.value).toEqual({
+        tag: 'Err',
+        value: 'Invalid transition from Offer to Offer'
+      });
+    });
+
+    it('should reject transition from Rejected to Rejected', () => {
+      const result = evaluateRule(rulePath, {
+        from_stage: stageToTag('Rejected'),
+        to_stage: stageToTag('Rejected')
+      });
+      expect(result.success).toBe(true);
+      expect(result.value).toEqual({
+        tag: 'Err',
+        value: 'Invalid transition from Rejected to Rejected'
+      });
+    });
   });
 });
 
