@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { evaluateRule, evaluateSource } from '../src/rill/bridge';
+import { stageToTag } from '../src/utils/stageMapping';
 import { writeFileSync, unlinkSync } from 'fs';
 import path from 'path';
 
@@ -9,8 +10,8 @@ describe('Rill Rules - Stage Transitions (AC4.1)', () => {
   describe('Research stage transitions', () => {
     it('should allow transition from Research to Applied', () => {
       const result = evaluateRule(rulePath, {
-        from_stage: 'Research',
-        to_stage: 'Applied'
+        from_stage: stageToTag('Research'),
+        to_stage: stageToTag('Applied')
       });
       expect(result.success).toBe(true);
       expect(result.value).toEqual({ tag: 'Ok', value: 'allowed' });
@@ -18,8 +19,8 @@ describe('Rill Rules - Stage Transitions (AC4.1)', () => {
 
     it('should allow transition from Research to Rejected', () => {
       const result = evaluateRule(rulePath, {
-        from_stage: 'Research',
-        to_stage: 'Rejected'
+        from_stage: stageToTag('Research'),
+        to_stage: stageToTag('Rejected')
       });
       expect(result.success).toBe(true);
       expect(result.value).toEqual({ tag: 'Ok', value: 'allowed' });
@@ -27,8 +28,8 @@ describe('Rill Rules - Stage Transitions (AC4.1)', () => {
 
     it('should allow transition from Applied to Research', () => {
       const result = evaluateRule(rulePath, {
-        from_stage: 'Applied',
-        to_stage: 'Research'
+        from_stage: stageToTag('Applied'),
+        to_stage: stageToTag('Research')
       });
       expect(result.success).toBe(true);
       expect(result.value).toEqual({ tag: 'Ok', value: 'allowed' });
@@ -36,8 +37,8 @@ describe('Rill Rules - Stage Transitions (AC4.1)', () => {
 
     it('should allow transition from Phone Screen to Research', () => {
       const result = evaluateRule(rulePath, {
-        from_stage: 'Phone Screen',
-        to_stage: 'Research'
+        from_stage: stageToTag('Phone Screen'),
+        to_stage: stageToTag('Research')
       });
       expect(result.success).toBe(true);
       expect(result.value).toEqual({ tag: 'Ok', value: 'allowed' });
@@ -45,8 +46,8 @@ describe('Rill Rules - Stage Transitions (AC4.1)', () => {
 
     it('should allow transition from Interview to Research', () => {
       const result = evaluateRule(rulePath, {
-        from_stage: 'Interview',
-        to_stage: 'Research'
+        from_stage: stageToTag('Interview'),
+        to_stage: stageToTag('Research')
       });
       expect(result.success).toBe(true);
       expect(result.value).toEqual({ tag: 'Ok', value: 'allowed' });
@@ -54,8 +55,8 @@ describe('Rill Rules - Stage Transitions (AC4.1)', () => {
 
     it('should allow transition from Offer to Research', () => {
       const result = evaluateRule(rulePath, {
-        from_stage: 'Offer',
-        to_stage: 'Research'
+        from_stage: stageToTag('Offer'),
+        to_stage: stageToTag('Research')
       });
       expect(result.success).toBe(true);
       expect(result.value).toEqual({ tag: 'Ok', value: 'allowed' });
@@ -63,8 +64,8 @@ describe('Rill Rules - Stage Transitions (AC4.1)', () => {
 
     it('should allow transition from Rejected to Research', () => {
       const result = evaluateRule(rulePath, {
-        from_stage: 'Rejected',
-        to_stage: 'Research'
+        from_stage: stageToTag('Rejected'),
+        to_stage: stageToTag('Research')
       });
       expect(result.success).toBe(true);
       expect(result.value).toEqual({ tag: 'Ok', value: 'allowed' });
@@ -74,8 +75,8 @@ describe('Rill Rules - Stage Transitions (AC4.1)', () => {
   describe('Valid transitions', () => {
     it('should allow transition from Applied to Phone Screen', () => {
       const result = evaluateRule(rulePath, {
-        from_stage: 'Applied',
-        to_stage: 'Phone Screen'
+        from_stage: stageToTag('Applied'),
+        to_stage: stageToTag('Phone Screen')
       });
       expect(result.success).toBe(true);
       expect(result.value).toEqual({ tag: 'Ok', value: 'allowed' });
@@ -83,8 +84,8 @@ describe('Rill Rules - Stage Transitions (AC4.1)', () => {
 
     it('should allow transition from Applied to Rejected', () => {
       const result = evaluateRule(rulePath, {
-        from_stage: 'Applied',
-        to_stage: 'Rejected'
+        from_stage: stageToTag('Applied'),
+        to_stage: stageToTag('Rejected')
       });
       expect(result.success).toBe(true);
       expect(result.value).toEqual({ tag: 'Ok', value: 'allowed' });
@@ -92,8 +93,8 @@ describe('Rill Rules - Stage Transitions (AC4.1)', () => {
 
     it('should allow transition from Phone Screen to Interview', () => {
       const result = evaluateRule(rulePath, {
-        from_stage: 'Phone Screen',
-        to_stage: 'Interview'
+        from_stage: stageToTag('Phone Screen'),
+        to_stage: stageToTag('Interview')
       });
       expect(result.success).toBe(true);
       expect(result.value).toEqual({ tag: 'Ok', value: 'allowed' });
@@ -101,8 +102,8 @@ describe('Rill Rules - Stage Transitions (AC4.1)', () => {
 
     it('should allow transition from Phone Screen to Rejected', () => {
       const result = evaluateRule(rulePath, {
-        from_stage: 'Phone Screen',
-        to_stage: 'Rejected'
+        from_stage: stageToTag('Phone Screen'),
+        to_stage: stageToTag('Rejected')
       });
       expect(result.success).toBe(true);
       expect(result.value).toEqual({ tag: 'Ok', value: 'allowed' });
@@ -110,8 +111,8 @@ describe('Rill Rules - Stage Transitions (AC4.1)', () => {
 
     it('should allow transition from Interview to Offer', () => {
       const result = evaluateRule(rulePath, {
-        from_stage: 'Interview',
-        to_stage: 'Offer'
+        from_stage: stageToTag('Interview'),
+        to_stage: stageToTag('Offer')
       });
       expect(result.success).toBe(true);
       expect(result.value).toEqual({ tag: 'Ok', value: 'allowed' });
@@ -119,8 +120,8 @@ describe('Rill Rules - Stage Transitions (AC4.1)', () => {
 
     it('should allow transition from Interview to Rejected', () => {
       const result = evaluateRule(rulePath, {
-        from_stage: 'Interview',
-        to_stage: 'Rejected'
+        from_stage: stageToTag('Interview'),
+        to_stage: stageToTag('Rejected')
       });
       expect(result.success).toBe(true);
       expect(result.value).toEqual({ tag: 'Ok', value: 'allowed' });
@@ -128,8 +129,8 @@ describe('Rill Rules - Stage Transitions (AC4.1)', () => {
 
     it('should allow transition from Offer to Rejected', () => {
       const result = evaluateRule(rulePath, {
-        from_stage: 'Offer',
-        to_stage: 'Rejected'
+        from_stage: stageToTag('Offer'),
+        to_stage: stageToTag('Rejected')
       });
       expect(result.success).toBe(true);
       expect(result.value).toEqual({ tag: 'Ok', value: 'allowed' });
@@ -139,8 +140,8 @@ describe('Rill Rules - Stage Transitions (AC4.1)', () => {
   describe('Invalid transitions', () => {
     it('should reject transition from Applied to Offer (invalid skip)', () => {
       const result = evaluateRule(rulePath, {
-        from_stage: 'Applied',
-        to_stage: 'Offer'
+        from_stage: stageToTag('Applied'),
+        to_stage: stageToTag('Offer')
       });
       expect(result.success).toBe(true);
       expect(result.value).toEqual({
@@ -151,8 +152,8 @@ describe('Rill Rules - Stage Transitions (AC4.1)', () => {
 
     it('should reject transition from Applied to Interview', () => {
       const result = evaluateRule(rulePath, {
-        from_stage: 'Applied',
-        to_stage: 'Interview'
+        from_stage: stageToTag('Applied'),
+        to_stage: stageToTag('Interview')
       });
       expect(result.success).toBe(true);
       expect(result.value).toEqual({
@@ -163,8 +164,8 @@ describe('Rill Rules - Stage Transitions (AC4.1)', () => {
 
     it('should reject transition from Phone Screen to Offer (invalid skip)', () => {
       const result = evaluateRule(rulePath, {
-        from_stage: 'Phone Screen',
-        to_stage: 'Offer'
+        from_stage: stageToTag('Phone Screen'),
+        to_stage: stageToTag('Offer')
       });
       expect(result.success).toBe(true);
       expect(result.value).toEqual({
@@ -175,8 +176,8 @@ describe('Rill Rules - Stage Transitions (AC4.1)', () => {
 
     it('should reject transition from Interview to Phone Screen (backwards)', () => {
       const result = evaluateRule(rulePath, {
-        from_stage: 'Interview',
-        to_stage: 'Phone Screen'
+        from_stage: stageToTag('Interview'),
+        to_stage: stageToTag('Phone Screen')
       });
       expect(result.success).toBe(true);
       expect(result.value).toEqual({
@@ -187,13 +188,97 @@ describe('Rill Rules - Stage Transitions (AC4.1)', () => {
 
     it('should reject transition from Rejected to Applied', () => {
       const result = evaluateRule(rulePath, {
-        from_stage: 'Rejected',
-        to_stage: 'Applied'
+        from_stage: stageToTag('Rejected'),
+        to_stage: stageToTag('Applied')
       });
       expect(result.success).toBe(true);
       expect(result.value).toEqual({
         tag: 'Err',
         value: 'Invalid transition from Rejected to Applied'
+      });
+    });
+
+    it('should reject transition from Research to Phone Screen', () => {
+      const result = evaluateRule(rulePath, {
+        from_stage: stageToTag('Research'),
+        to_stage: stageToTag('Phone Screen')
+      });
+      expect(result.success).toBe(true);
+      expect(result.value).toEqual({
+        tag: 'Err',
+        value: 'Invalid transition from Research to Phone Screen'
+      });
+    });
+
+    it('should reject transition from Research to Interview', () => {
+      const result = evaluateRule(rulePath, {
+        from_stage: stageToTag('Research'),
+        to_stage: stageToTag('Interview')
+      });
+      expect(result.success).toBe(true);
+      expect(result.value).toEqual({
+        tag: 'Err',
+        value: 'Invalid transition from Research to Interview'
+      });
+    });
+
+    it('should reject transition from Phone Screen to Applied', () => {
+      const result = evaluateRule(rulePath, {
+        from_stage: stageToTag('Phone Screen'),
+        to_stage: stageToTag('Applied')
+      });
+      expect(result.success).toBe(true);
+      expect(result.value).toEqual({
+        tag: 'Err',
+        value: 'Invalid transition from Phone Screen to Applied'
+      });
+    });
+
+    it('should reject transition from Interview to Applied', () => {
+      const result = evaluateRule(rulePath, {
+        from_stage: stageToTag('Interview'),
+        to_stage: stageToTag('Applied')
+      });
+      expect(result.success).toBe(true);
+      expect(result.value).toEqual({
+        tag: 'Err',
+        value: 'Invalid transition from Interview to Applied'
+      });
+    });
+
+    it('should reject transition from Offer to Applied', () => {
+      const result = evaluateRule(rulePath, {
+        from_stage: stageToTag('Offer'),
+        to_stage: stageToTag('Applied')
+      });
+      expect(result.success).toBe(true);
+      expect(result.value).toEqual({
+        tag: 'Err',
+        value: 'Invalid transition from Offer to Applied'
+      });
+    });
+
+    it('should reject transition from Offer to Interview', () => {
+      const result = evaluateRule(rulePath, {
+        from_stage: stageToTag('Offer'),
+        to_stage: stageToTag('Interview')
+      });
+      expect(result.success).toBe(true);
+      expect(result.value).toEqual({
+        tag: 'Err',
+        value: 'Invalid transition from Offer to Interview'
+      });
+    });
+
+    it('should reject transition from Rejected to Offer', () => {
+      const result = evaluateRule(rulePath, {
+        from_stage: stageToTag('Rejected'),
+        to_stage: stageToTag('Offer')
+      });
+      expect(result.success).toBe(true);
+      expect(result.value).toEqual({
+        tag: 'Err',
+        value: 'Invalid transition from Rejected to Offer'
       });
     });
   });
@@ -640,8 +725,8 @@ describe('Rill Rules - Integration (All ACs)', () => {
 
     // Evaluate transition rule
     const transResult = evaluateRule(transitionsPath, {
-      from_stage: 'Applied',
-      to_stage: 'Phone Screen'
+      from_stage: stageToTag('Applied'),
+      to_stage: stageToTag('Phone Screen')
     });
     expect(transResult.success).toBe(true);
 

@@ -92,4 +92,13 @@ describe('rule headers (in-file signatures)', () => {
     expect(result.ok).toBe(true);
     expect(result.errors).toEqual([]);
   });
+
+  it('AC7.3: a non-exhaustive match over a union is caught with "missing" message naming the constructor', () => {
+    const result = checkAllRules(FIXTURES_DIR);
+    const err = result.errors.find(e => e.startsWith('nonexhaustive.lv:'));
+    expect(err).toBeDefined();
+    // Boot gate reports non-exhaustive matches with "Missing patterns" and constructor names
+    expect(err).toMatch(/missing patterns/i);
+    expect(err).toMatch(/Paused/);
+  });
 });
