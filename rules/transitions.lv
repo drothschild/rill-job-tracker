@@ -3,29 +3,47 @@
 type Stage = Research | Applied | PhoneScreen | Interview | Offer | Rejected
 
 rule transitions(from_stage: Stage, to_stage: Stage) -> Result(String)
-  let allowed = [
-    (Research, [Applied, Rejected]),
-    (Applied, [PhoneScreen, Rejected, Research]),
-    (PhoneScreen, [Interview, Rejected, Research]),
-    (Interview, [Offer, Rejected, Research]),
-    (Offer, [Rejected, Research]),
-    (Rejected, [Research])
-  ]
-  let nexts = lookup(from_stage, allowed) |> catch _ -> []
   let from_display =
-    if from_stage == Research then "Research"
-    else if from_stage == Applied then "Applied"
-    else if from_stage == PhoneScreen then "Phone Screen"
-    else if from_stage == Interview then "Interview"
-    else if from_stage == Offer then "Offer"
-    else "Rejected"
+    match from_stage {
+      Research -> "Research",
+      Applied -> "Applied",
+      PhoneScreen -> "Phone Screen",
+      Interview -> "Interview",
+      Offer -> "Offer",
+      Rejected -> "Rejected"
+    }
   let to_display =
-    if to_stage == Research then "Research"
-    else if to_stage == Applied then "Applied"
-    else if to_stage == PhoneScreen then "Phone Screen"
-    else if to_stage == Interview then "Interview"
-    else if to_stage == Offer then "Offer"
-    else "Rejected"
-  if one_of(to_stage, nexts)
-  then Ok("allowed")
-  else Err("Invalid transition from " ++ from_display ++ " to " ++ to_display)
+    match to_stage {
+      Research -> "Research",
+      Applied -> "Applied",
+      PhoneScreen -> "Phone Screen",
+      Interview -> "Interview",
+      Offer -> "Offer",
+      Rejected -> "Rejected"
+    }
+  match from_stage {
+    Research ->
+      if one_of(to_stage, [Applied, Rejected])
+      then Ok("allowed")
+      else Err("Invalid transition from " ++ from_display ++ " to " ++ to_display),
+    Applied ->
+      if one_of(to_stage, [PhoneScreen, Rejected, Research])
+      then Ok("allowed")
+      else Err("Invalid transition from " ++ from_display ++ " to " ++ to_display),
+    PhoneScreen ->
+      if one_of(to_stage, [Interview, Rejected, Research])
+      then Ok("allowed")
+      else Err("Invalid transition from " ++ from_display ++ " to " ++ to_display),
+    Interview ->
+      if one_of(to_stage, [Offer, Rejected, Research])
+      then Ok("allowed")
+      else Err("Invalid transition from " ++ from_display ++ " to " ++ to_display),
+    Offer ->
+      if one_of(to_stage, [Rejected, Research])
+      then Ok("allowed")
+      else Err("Invalid transition from " ++ from_display ++ " to " ++ to_display),
+    Rejected ->
+      if one_of(to_stage, [Research])
+      then Ok("allowed")
+      else Err("Invalid transition from " ++ from_display ++ " to " ++ to_display)
+  }
