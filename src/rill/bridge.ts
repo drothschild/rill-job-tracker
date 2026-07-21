@@ -1,7 +1,10 @@
 import { readFileSync } from 'fs';
-import { lex, parseProgram, evaluate, createPrelude, Value } from 'rill-lang';
+import { lex, parseProgram, evaluate, createPrelude, Value, rillToJs as rillLangRillToJs, checkRuleSource, RuleHeader } from 'rill-lang';
 
-// JS → Rill conversion
+// Canonical rillToJs from rill-lang (outputs { tag: "X" } for no-arg tags)
+export const rillToJs = rillLangRillToJs;
+
+// Value-directed JS → Rill conversion (no type information needed at conversion time)
 export function jsToRill(value: unknown): Value {
   if (value === null || value === undefined) {
     return { kind: 'Unit' };
@@ -21,11 +24,19 @@ export function jsToRill(value: unknown): Value {
     return { kind: 'List', elements: value.map(jsToRill) };
   }
   if (typeof value === 'object') {
-    // Special handling for tag objects: { tag: "Constructor" } with only the tag field
-    // indicates a no-arg tag constructor
+    // Special handling for tag objects: { tag: "Constructor" } with optional value field
+    // indicates a Rill tag constructor (canonical form at the bridge)
     const keys = Object.keys(value);
-    if (keys.length === 1 && keys[0] === 'tag' && typeof (value as any).tag === 'string') {
-      return { kind: 'Tag', tag: (value as any).tag, args: [] };
+    if (keys.length >= 1 && (value as any).tag !== undefined && typeof (value as any).tag === 'string') {
+      const tagValue = (value as any).tag;
+      const payload = (value as any).value;
+      if (payload === undefined) {
+        // No-arg tag: { tag: "Research" }
+        return { kind: 'Tag', tag: tagValue, args: [] };
+      } else {
+        // Tagged value: { tag: "Err", value: "message" }
+        return { kind: 'Tag', tag: tagValue, args: [jsToRill(payload)] };
+      }
     }
 
     const fields = new Map<string, Value>();
@@ -37,38 +48,8 @@ export function jsToRill(value: unknown): Value {
   return { kind: 'Unit' };
 }
 
-// Rill → JS conversion
-export function rillToJs(value: Value): unknown {
-  switch (value.kind) {
-    case 'Int':
-    case 'Float':
-      return value.value;
-    case 'String':
-      return value.value;
-    case 'Bool':
-      return value.value;
-    case 'Unit':
-      return null;
-    case 'List':
-      return value.elements.map(rillToJs);
-    case 'Tuple':
-      return value.elements.map(rillToJs);
-    case 'Record': {
-      const obj: Record<string, unknown> = {};
-      for (const [k, v] of value.fields) {
-        obj[k] = rillToJs(v);
-      }
-      return obj;
-    }
-    case 'Tag':
-      if (value.args.length === 0) return value.tag;
-      if (value.args.length === 1) return { tag: value.tag, value: rillToJs(value.args[0]) };
-      return { tag: value.tag, values: value.args.map(rillToJs) };
-    case 'Closure':
-    case 'BuiltinFn':
-      return `<function:${value.kind === 'Closure' ? 'closure' : value.name}>`;
-  }
-}
+// Cache for rule headers (path → header)
+const ruleHeaderCache = new Map<string, RuleHeader | null>();
 
 // Rule evaluation result
 export interface RuleResult {
@@ -84,17 +65,27 @@ export function evaluateRule(
 ): RuleResult {
   try {
     const source = readFileSync(rulePath, 'utf-8');
-    return evaluateSource(source, data);
+
+    // Get or cache the rule header via checkRuleSource
+    let header = ruleHeaderCache.get(rulePath);
+    if (header === undefined) {
+      const checkResult = checkRuleSource(source);
+      header = checkResult.header;
+      ruleHeaderCache.set(rulePath, header);
+    }
+
+    return evaluateSource(source, data, header);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
     return { success: false, value: null, error: message };
   }
 }
 
-// Evaluate a Rill source string with injected data
+// Evaluate a Rill source string with injected data and optional header
 export function evaluateSource(
   source: string,
-  data: Record<string, unknown>
+  data: Record<string, unknown>,
+  header?: RuleHeader | null
 ): RuleResult {
   try {
     const env = createPrelude();
@@ -103,17 +94,21 @@ export function evaluateSource(
     }
     const tokens = lex(source);
     const program = parseProgram(tokens);
+
+    // Use provided header or fall back to parsing it
+    const ruleHeader = header ?? program.header;
+
     // A rule header names the exact inputs the host must inject — fail the
     // injection boundary with the parameter's name instead of mid-evaluation.
-    if (program.header) {
-      const missing = program.header.params
+    if (ruleHeader) {
+      const missing = ruleHeader.params
         .map((p) => p.name)
         .filter((name) => !(name in data));
       if (missing.length > 0) {
         return {
           success: false,
           value: null,
-          error: `rule '${program.header.name}' is missing injected input(s): ${missing.join(', ')}`,
+          error: `rule '${ruleHeader.name}' is missing injected input(s): ${missing.join(', ')}`,
         };
       }
     }

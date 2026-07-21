@@ -125,10 +125,10 @@ describe('Rill Bridge - Type Conversion (AC4.5)', () => {
   });
 
   describe('Tag conversion (Ok/Err types)', () => {
-    it('should convert Tag with no args to string', () => {
+    it('should convert Tag with no args to canonical { tag: X } format', () => {
       const rillValue = { kind: 'Tag' as const, tag: 'Ok', args: [] };
       const result = rillToJs(rillValue);
-      expect(result).toBe('Ok');
+      expect(result).toEqual({ tag: 'Ok' });
     });
 
     it('should convert Tag with single arg to object with tag and value', () => {
@@ -141,7 +141,7 @@ describe('Rill Bridge - Type Conversion (AC4.5)', () => {
       expect(result).toEqual({ tag: 'Err', value: 'invalid input' });
     });
 
-    it('should convert Tag with multiple args to object with tag and values', () => {
+    it('should reject multi-arg constructors (unsupported at bridge)', () => {
       const rillValue = {
         kind: 'Tag' as const,
         tag: 'SomeTag',
@@ -150,8 +150,7 @@ describe('Rill Bridge - Type Conversion (AC4.5)', () => {
           { kind: 'String' as const, value: 'test' }
         ]
       };
-      const result = rillToJs(rillValue);
-      expect(result).toEqual({ tag: 'SomeTag', values: [1, 'test'] });
+      expect(() => rillToJs(rillValue)).toThrow(/Multi-payload constructors are unsupported/);
     });
   });
 });

@@ -19,7 +19,7 @@
     "express-session": "^1.18.1",
     "node-cron": "^4.2.1",
     "nodemailer": "^8.0.1",
-    "rill-lang": "file:../rill-lang",
+    "rill-lang": "file:../rill-lang/.worktrees/rill-state-lang",
     "tsx": "^4.21.0"
   },
   "devDependencies": {
