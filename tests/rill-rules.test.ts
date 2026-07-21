@@ -196,6 +196,90 @@ describe('Rill Rules - Stage Transitions (AC4.1)', () => {
         value: 'Invalid transition from Rejected to Applied'
       });
     });
+
+    it('should reject transition from Research to Phone Screen', () => {
+      const result = evaluateRule(rulePath, {
+        from_stage: 'Research',
+        to_stage: 'Phone Screen'
+      });
+      expect(result.success).toBe(true);
+      expect(result.value).toEqual({
+        tag: 'Err',
+        value: 'Invalid transition from Research to Phone Screen'
+      });
+    });
+
+    it('should reject transition from Research to Interview', () => {
+      const result = evaluateRule(rulePath, {
+        from_stage: 'Research',
+        to_stage: 'Interview'
+      });
+      expect(result.success).toBe(true);
+      expect(result.value).toEqual({
+        tag: 'Err',
+        value: 'Invalid transition from Research to Interview'
+      });
+    });
+
+    it('should reject transition from Phone Screen to Applied', () => {
+      const result = evaluateRule(rulePath, {
+        from_stage: 'Phone Screen',
+        to_stage: 'Applied'
+      });
+      expect(result.success).toBe(true);
+      expect(result.value).toEqual({
+        tag: 'Err',
+        value: 'Invalid transition from Phone Screen to Applied'
+      });
+    });
+
+    it('should reject transition from Interview to Applied', () => {
+      const result = evaluateRule(rulePath, {
+        from_stage: 'Interview',
+        to_stage: 'Applied'
+      });
+      expect(result.success).toBe(true);
+      expect(result.value).toEqual({
+        tag: 'Err',
+        value: 'Invalid transition from Interview to Applied'
+      });
+    });
+
+    it('should reject transition from Offer to Applied', () => {
+      const result = evaluateRule(rulePath, {
+        from_stage: 'Offer',
+        to_stage: 'Applied'
+      });
+      expect(result.success).toBe(true);
+      expect(result.value).toEqual({
+        tag: 'Err',
+        value: 'Invalid transition from Offer to Applied'
+      });
+    });
+
+    it('should reject transition from Offer to Interview', () => {
+      const result = evaluateRule(rulePath, {
+        from_stage: 'Offer',
+        to_stage: 'Interview'
+      });
+      expect(result.success).toBe(true);
+      expect(result.value).toEqual({
+        tag: 'Err',
+        value: 'Invalid transition from Offer to Interview'
+      });
+    });
+
+    it('should reject transition from Rejected to Offer', () => {
+      const result = evaluateRule(rulePath, {
+        from_stage: 'Rejected',
+        to_stage: 'Offer'
+      });
+      expect(result.success).toBe(true);
+      expect(result.value).toEqual({
+        tag: 'Err',
+        value: 'Invalid transition from Rejected to Offer'
+      });
+    });
   });
 });
 
