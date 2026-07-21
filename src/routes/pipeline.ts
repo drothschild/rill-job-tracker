@@ -14,6 +14,7 @@ import { evaluateRule } from '../rill/bridge';
 import { escapeHtml } from '../views/helpers';
 import { layout } from '../views/layout';
 import { pipelineBoardView } from '../views/pipeline/board';
+import { stageToTag } from '../utils/stageMapping';
 
 const router = Router();
 
@@ -68,8 +69,8 @@ router.post('/transition', (req: Request, res: Response): void => {
 
   // Evaluate Rill transitions.lv rule
   const ruleResult = evaluateRule('rules/transitions.lv', {
-    from_stage: fromStage.name,
-    to_stage: toStage.name,
+    from_stage: stageToTag(fromStage.name),
+    to_stage: stageToTag(toStage.name),
   });
 
   if (!ruleResult.success) {

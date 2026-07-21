@@ -1,15 +1,31 @@
--- Stage transition validation
-rule transitions(from_stage: String, to_stage: String) -> Result(String)
+-- Stage transition validation with declared Stage union
 
-let allowed = [
-  ("Research",     ["Applied", "Rejected"]),
-  ("Applied",      ["Phone Screen", "Rejected", "Research"]),
-  ("Phone Screen", ["Interview", "Rejected", "Research"]),
-  ("Interview",    ["Offer", "Rejected", "Research"]),
-  ("Offer",        ["Rejected", "Research"]),
-  ("Rejected",     ["Research"])
-]
-let nexts = lookup(from_stage, allowed) |> catch _ -> []
-if one_of(to_stage, nexts)
-then Ok("allowed")
-else Err("Invalid transition from " ++ from_stage ++ " to " ++ to_stage)
+type Stage = Research | Applied | PhoneScreen | Interview | Offer | Rejected
+
+rule transitions(from_stage: Stage, to_stage: Stage) -> Result(String)
+  let allowed = [
+    (Research, [Applied, Rejected]),
+    (Applied, [PhoneScreen, Rejected, Research]),
+    (PhoneScreen, [Interview, Rejected, Research]),
+    (Interview, [Offer, Rejected, Research]),
+    (Offer, [Rejected, Research]),
+    (Rejected, [Research])
+  ]
+  let nexts = lookup(from_stage, allowed) |> catch _ -> []
+  let from_display =
+    if from_stage == Research then "Research"
+    else if from_stage == Applied then "Applied"
+    else if from_stage == PhoneScreen then "Phone Screen"
+    else if from_stage == Interview then "Interview"
+    else if from_stage == Offer then "Offer"
+    else "Rejected"
+  let to_display =
+    if to_stage == Research then "Research"
+    else if to_stage == Applied then "Applied"
+    else if to_stage == PhoneScreen then "Phone Screen"
+    else if to_stage == Interview then "Interview"
+    else if to_stage == Offer then "Offer"
+    else "Rejected"
+  if one_of(to_stage, nexts)
+  then Ok("allowed")
+  else Err("Invalid transition from " ++ from_display ++ " to " ++ to_display)

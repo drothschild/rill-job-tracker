@@ -21,6 +21,13 @@ export function jsToRill(value: unknown): Value {
     return { kind: 'List', elements: value.map(jsToRill) };
   }
   if (typeof value === 'object') {
+    // Special handling for tag objects: { tag: "Constructor" } with only the tag field
+    // indicates a no-arg tag constructor
+    const keys = Object.keys(value);
+    if (keys.length === 1 && keys[0] === 'tag' && typeof (value as any).tag === 'string') {
+      return { kind: 'Tag', tag: (value as any).tag, args: [] };
+    }
+
     const fields = new Map<string, Value>();
     for (const [k, v] of Object.entries(value)) {
       fields.set(k, jsToRill(v));
