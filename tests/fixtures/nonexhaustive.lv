@@ -1,0 +1,9 @@
+-- Non-exhaustive match over a declared union (missing one constructor)
+type Status = Active | Inactive | Paused
+
+rule check_status(s: Status) -> String
+  match s {
+    Active -> "active",
+    Inactive -> "inactive"
+    -- Missing: Paused
+  }
